@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoJS Timeline Example</title>
+    <script src="https://unpkg.com/gojs/release/go.js"></script>
+    <style>
+        #myDiagramDiv {
+            width: 100%;
+            height: 600px;
+            border: solid 1px black;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="myDiagramDiv"></div>
+
+    <script>
+        var $ = go.GraphObject.make;  // GoJSのショートカット
+
+        var diagram = $(go.Diagram, "myDiagramDiv", {
+            "undoManager.isEnabled": true,  // Undo/Redoの有効化
+            "contentAlignment": go.Spot.Center,  // 初期レイアウト位置
+        });
+
+        // ノードテンプレート（プロジェクト）
+        diagram.nodeTemplate =
+            $(go.Node, "Auto",
+                $(go.Shape, "Rectangle", { fill: "lightblue" }),
+                $(go.TextBlock, { margin: 10 }, new go.Binding("text", "name"))
+            );
+
+        // リンクテンプレート（相関関係）
+        diagram.linkTemplate =
+            $(go.Link,
+                $(go.Shape, { strokeWidth: 2, stroke: "gray" }),
+                $(go.Shape, { toArrow: "Standard" })
+            );
+
+        // モデルデータ（プロジェクト情報）
+        diagram.model = new go.GraphLinksModel(
+            [
+                { key: 1, name: "Project A", start: "2025-01-01", end: "2025-02-01" },
+                { key: 2, name: "Project B", start: "2025-01-15", end: "2025-03-01" },
+                { key: 3, name: "Project C", start: "2025-02-01", end: "2025-04-01" }
+            ],
+            [
+                { from: 1, to: 2 },  // Project A → Project B
+                { from: 2, to: 3 }   // Project B → Project C
+            ]
+        );
+
+        // 時間に基づいてノード位置を決定するロジック
+        diagram.addDiagramListener("InitialLayoutCompleted", function (e) {
+            diagram.nodes.each(function (node) {
+                var modelData = node.data;
+                var startDate = new Date(modelData.start);
+                var endDate = new Date(modelData.end);
+                var duration = (endDate - startDate) / (1000 * 60 * 60 * 24);  // 日数に変換
+                var positionX = (startDate - new Date("2025-01-01")) / (1000 * 60 * 60 * 24); // 基準日からの差分
+                node.position = new go.Point(positionX * 50, 0);  // 横軸に基づいた位置調整
+            });
+        });
+
+        // GridSnap設定を修正
+        var draggingTool = diagram.toolManager.draggingTool;
+        draggingTool.isGridSnapEnabled = true;  // ドラッグ時にグリッドにスナップ
+        draggingTool.snapCellSize = new go.Size(100, 100);  // グリッドサイズ
+    </script>
+
+
+</body>
+
+</html>
