@@ -3,11 +3,26 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>GoJS 年代別年表</title>
+    <title>GoJS 固定サイズの年代枠（リンク付き）</title>
     <script src="https://unpkg.com/gojs@2.2.16/release/go.js"></script>
     <script>
         function init() {
             const $ = go.GraphObject.make;
+
+            // ノードの移動をグループ内に制限する関数
+            function stayInGroup(part, pt, gridpt) {
+                const grp = part.containingGroup;
+                if (grp === null) return pt;
+                const back = grp.findObject("PH");
+                if (back === null) return pt;
+                const p1 = back.getDocumentPoint(go.Spot.TopLeft);
+                const p2 = back.getDocumentPoint(go.Spot.BottomRight);
+                const b = part.actualBounds;
+                const loc = part.location;
+                const x = Math.max(p1.x, Math.min(pt.x, p2.x - b.width));
+                const y = Math.max(p1.y, Math.min(pt.y, p2.y - b.height));
+                return new go.Point(x, y);
+            }
 
             const myDiagram = $(go.Diagram, "myDiagramDiv", {
                 "undoManager.isEnabled": true,
@@ -19,30 +34,34 @@
                 })
             });
 
-            // グループテンプレート（年代枠）
+            // グループテンプレート（固定サイズの年代枠）
             myDiagram.groupTemplate =
                 $(go.Group, "Vertical",
                     {
-                        layout: $(go.GridLayout, {
-                            wrappingColumn: 1,
-                            alignment: go.GridLayout.Position
-                        }),
-                        background: "lightgray",
-                        padding: 10
+                        selectionObjectName: "PH",
+                        locationObjectName: "PH"
                     },
+                    new go.Binding("location", "loc", go.Point.parse),
                     $(go.TextBlock,
                         { font: "Bold 12pt Sans-Serif", margin: 5 },
                         new go.Binding("text", "key")),
-                    $(go.Panel, "Auto",
-                        $(go.Shape, "Rectangle",
-                            { fill: null, stroke: "black", strokeWidth: 2 }),
-                        $(go.Placeholder, { padding: 10 })
-                    )
+                    $(go.Shape, "Rectangle",
+                        {
+                            name: "PH",
+                            fill: "lightgray",
+                            stroke: "black",
+                            strokeWidth: 2,
+                            desiredSize: new go.Size(300, 150)
+                        })
                 );
 
             // ノードテンプレート（プロジェクト）
             myDiagram.nodeTemplate =
                 $(go.Node, "Auto",
+                    {
+                        dragComputation: stayInGroup
+                    },
+                    new go.Binding("location", "loc", go.Point.parse),
                     $(go.Shape, "RoundedRectangle",
                         { fill: "white", stroke: "black" }),
                     $(go.TextBlock,
@@ -50,15 +69,27 @@
                         new go.Binding("text", "name"))
                 );
 
+            // リンクテンプレートの定義
+            myDiagram.linkTemplate =
+                $(go.Link,
+                    { routing: go.Link.Normal, curve: go.Link.Bezier },
+                    $(go.Shape, { strokeWidth: 2, stroke: "black" }),
+                    $(go.Shape, { toArrow: "Standard", stroke: null })
+                );
+
             // モデルデータの設定
             myDiagram.model = new go.GraphLinksModel(
                 [
-                    { key: "2011", isGroup: true },
-                    { key: "2012", isGroup: true },
-                    { key: "2013", isGroup: true },
-                    { key: 1, name: "プロジェクトA", group: "2011" },
-                    { key: 2, name: "プロジェクトB", group: "2012" },
-                    { key: 3, name: "プロジェクトC", group: "2013" }
+                    { key: "2011", isGroup: true, loc: "0 0" },
+                    { key: "2012", isGroup: true, loc: "350 0" },
+                    { key: "2013", isGroup: true, loc: "700 0" },
+                    { key: 1, name: "プロジェクトA", group: "2011", loc: "50 50" },
+                    { key: 2, name: "プロジェクトB", group: "2012", loc: "400 50" },
+                    { key: 3, name: "プロジェクトC", group: "2013", loc: "750 50" }
+                ],
+                [
+                    { from: 1, to: 2 },
+                    { from: 2, to: 3 }
                 ]
             );
         }
