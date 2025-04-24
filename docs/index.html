@@ -1,78 +1,72 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GoJS Timeline Example</title>
-    <script src="https://unpkg.com/gojs/release/go.js"></script>
-    <style>
-        #myDiagramDiv {
-            width: 100%;
-            height: 600px;
-            border: solid 1px black;
+    <title>GoJS 年代別年表</title>
+    <script src="https://unpkg.com/gojs@2.2.16/release/go.js"></script>
+    <script>
+        function init() {
+            const $ = go.GraphObject.make;
+
+            const myDiagram = $(go.Diagram, "myDiagramDiv", {
+                "undoManager.isEnabled": true,
+                layout: $(go.GridLayout, {
+                    wrappingColumn: 0,
+                    alignment: go.GridLayout.Position,
+                    cellSize: new go.Size(1, 1),
+                    spacing: new go.Size(20, 20)
+                })
+            });
+
+            // グループテンプレート（年代枠）
+            myDiagram.groupTemplate =
+                $(go.Group, "Vertical",
+                    {
+                        layout: $(go.GridLayout, {
+                            wrappingColumn: 1,
+                            alignment: go.GridLayout.Position
+                        }),
+                        background: "lightgray",
+                        padding: 10
+                    },
+                    $(go.TextBlock,
+                        { font: "Bold 12pt Sans-Serif", margin: 5 },
+                        new go.Binding("text", "key")),
+                    $(go.Panel, "Auto",
+                        $(go.Shape, "Rectangle",
+                            { fill: null, stroke: "black", strokeWidth: 2 }),
+                        $(go.Placeholder, { padding: 10 })
+                    )
+                );
+
+            // ノードテンプレート（プロジェクト）
+            myDiagram.nodeTemplate =
+                $(go.Node, "Auto",
+                    $(go.Shape, "RoundedRectangle",
+                        { fill: "white", stroke: "black" }),
+                    $(go.TextBlock,
+                        { margin: 5 },
+                        new go.Binding("text", "name"))
+                );
+
+            // モデルデータの設定
+            myDiagram.model = new go.GraphLinksModel(
+                [
+                    { key: "2011", isGroup: true },
+                    { key: "2012", isGroup: true },
+                    { key: "2013", isGroup: true },
+                    { key: 1, name: "プロジェクトA", group: "2011" },
+                    { key: 2, name: "プロジェクトB", group: "2012" },
+                    { key: 3, name: "プロジェクトC", group: "2013" }
+                ]
+            );
         }
-    </style>
+    </script>
 </head>
 
-<body>
-
-    <div id="myDiagramDiv"></div>
-
-    <script>
-        var $ = go.GraphObject.make;  // GoJSのショートカット
-
-        var diagram = $(go.Diagram, "myDiagramDiv", {
-            "undoManager.isEnabled": true,  // Undo/Redoの有効化
-            "contentAlignment": go.Spot.Center,  // 初期レイアウト位置
-        });
-
-        // ノードテンプレート（プロジェクト）
-        diagram.nodeTemplate =
-            $(go.Node, "Auto",
-                $(go.Shape, "Rectangle", { fill: "lightblue" }),
-                $(go.TextBlock, { margin: 10 }, new go.Binding("text", "name"))
-            );
-
-        // リンクテンプレート（相関関係）
-        diagram.linkTemplate =
-            $(go.Link,
-                $(go.Shape, { strokeWidth: 2, stroke: "gray" }),
-                $(go.Shape, { toArrow: "Standard" })
-            );
-
-        // モデルデータ（プロジェクト情報）
-        diagram.model = new go.GraphLinksModel(
-            [
-                { key: 1, name: "Project A", start: "2025-01-01", end: "2025-02-01" },
-                { key: 2, name: "Project B", start: "2025-01-15", end: "2025-03-01" },
-                { key: 3, name: "Project C", start: "2025-02-01", end: "2025-04-01" }
-            ],
-            [
-                { from: 1, to: 2 },  // Project A → Project B
-                { from: 2, to: 3 }   // Project B → Project C
-            ]
-        );
-
-        // 時間に基づいてノード位置を決定するロジック
-        diagram.addDiagramListener("InitialLayoutCompleted", function (e) {
-            diagram.nodes.each(function (node) {
-                var modelData = node.data;
-                var startDate = new Date(modelData.start);
-                var endDate = new Date(modelData.end);
-                var duration = (endDate - startDate) / (1000 * 60 * 60 * 24);  // 日数に変換
-                var positionX = (startDate - new Date("2025-01-01")) / (1000 * 60 * 60 * 24); // 基準日からの差分
-                node.position = new go.Point(positionX * 50, 0);  // 横軸に基づいた位置調整
-            });
-        });
-
-        // GridSnap設定を修正
-        var draggingTool = diagram.toolManager.draggingTool;
-        draggingTool.isGridSnapEnabled = true;  // ドラッグ時にグリッドにスナップ
-        draggingTool.snapCellSize = new go.Size(100, 100);  // グリッドサイズ
-    </script>
-
-
+<body onload="init()">
+    <div id="myDiagramDiv" style="width:100%; height:600px; border:1px solid black"></div>
 </body>
 
 </html>
