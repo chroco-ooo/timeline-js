@@ -2,153 +2,134 @@
 <html lang="ja">
 
 <head>
-    <meta charset="UTF-8" />
-    <title>バンド付きツリー図</title>
-    <script src="https://cdn.jsdelivr.net/npm/gojs@3.0.2/release/go.js"></script>
+    <meta charset="UTF-8">
+    <title>Timeline Generator Sample</title>
     <style>
-        html,
         body {
             margin: 0;
-            padding: 0;
-            height: 100%;
+            padding: 20px;
+            background: #f5f5f5;
         }
 
-        #myDiagramDiv {
+        #timeline-container {
+            position: relative;
             width: 100%;
+            height: 600px;
+            background: #ffffff;
+            border: 1px solid #ccc;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        .timeline-grid {
+            display: grid;
+            position: relative;
+            width: max-content;
             height: 100%;
-            border: 1px solid #333;
+            grid-auto-rows: 120px;
+        }
+
+        .timeline-year {
+            text-align: center;
+            font-weight: bold;
+            background: #eee;
+            border-right: 1px solid #ccc;
+            border-bottom: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .timeline-cell {
+            border-right: 1px solid #e0e0e0;
+            border-bottom: 1px solid #e0e0e0;
         }
     </style>
 </head>
 
 <body>
-    <div id="myDiagramDiv"></div>
+
+    <div id="timeline-container"></div>
 
     <script>
-        // レイアウトが水平でレイヤーバンドが垂直か、またはその逆かを制御する
-        var HORIZONTAL = true; // この定数はここでのみ設定可能、動的に変更は不可
-
-        // TreeLayoutを実行し、commitLayersをオーバーライドして背景の"_BANDS"パーツを更新
-        class SimpleBandedTreeLayout extends go.TreeLayout {
-            constructor(init) {
-                super();
-                this.layerStyle = go.TreeLayerStyle.Uniform; // 直線的なレイヤーに必要
-                if (init) Object.assign(this, init);
+        class TimelineGenerator {
+            constructor(options) {
+                this.targetId = options.targetId;
+                this.startDate = options.startDate;
+                this.endDate = options.endDate;
+                this.scale = options.scale || 'month'; // 'month' or 'year'
+                this.projects = options.projects || [];
+                this.links = options.links || [];
             }
 
-            commitLayers(layerRects, offset) {
-                // バンドを保持する背景オブジェクトを更新
-                var bands = this.diagram.findPartForKey('_BANDS');
-                if (bands) {
-                    var model = this.diagram.model;
-                    bands.location = this.arrangementOrigin.copy().add(offset);
+            render() {
+                const container = document.getElementById(this.targetId);
+                if (!container) {
+                    console.error("ターゲット要素が見つかりません");
+                    return;
+                }
 
-                    // 各バンドの表示・非表示を設定（レイヤーの有無による）
-                    for (var it = bands.elements; it.next();) {
-                        var idx = it.key;
-                        var elt = it.value; // バンドを表すアイテムパネル
-                        elt.visible = idx < layerRects.length;
-                    }
+                container.innerHTML = ''; // 初期化
 
-                    // 各バンドの範囲(bounds)をデータバインディングで設定
-                    var arr = bands.data.itemArray;
-                    for (var i = 0; i < layerRects.length; i++) {
-                        var itemdata = arr[i];
-                        if (itemdata) {
-                            model.setDataProperty(itemdata, 'bounds', layerRects[i]);
-                        }
+                // グリッドベース作成
+                const grid = document.createElement('div');
+                grid.className = 'timeline-grid';
+
+                const months = this.generateMonths();
+                grid.style.gridTemplateColumns = `repeat(${months.length}, 120px)`;
+
+                // 年表ヘッダー
+                months.forEach((month, index) => {
+                    const isYearStart = month.endsWith('-01');
+                    const cell = document.createElement('div');
+                    cell.className = isYearStart ? 'timeline-year' : 'timeline-cell';
+                    cell.innerText = isYearStart ? month.substring(0, 4) : '';
+                    grid.appendChild(cell);
+                });
+
+                container.appendChild(grid);
+            }
+
+            generateMonths() {
+                const result = [];
+                let current = this.parseDate(this.startDate);
+                const end = this.parseDate(this.endDate);
+
+                while (current <= end) {
+                    result.push(this.formatDate(current));
+                    if (this.scale === 'month') {
+                        current.setMonth(current.getMonth() + 1);
+                    } else if (this.scale === 'year') {
+                        current.setFullYear(current.getFullYear() + 1);
                     }
                 }
+                return result;
+            }
+
+            parseDate(str) {
+                const [year, month] = str.split('-').map(Number);
+                return new Date(year, (month || 1) - 1);
+            }
+
+            formatDate(date) {
+                const y = date.getFullYear();
+                const m = (date.getMonth() + 1).toString().padStart(2, '0');
+                return `${y}-${m}`;
             }
         }
-        // SimpleBandedTreeLayoutクラス終了
 
-        function init() {
-            myDiagram = new go.Diagram('myDiagramDiv', {
-                layout: new SimpleBandedTreeLayout({ // 上で定義したカスタムレイアウト
-                    angle: HORIZONTAL ? 0 : 90,
-                    arrangement: HORIZONTAL ? go.TreeArrangement.Vertical : go.TreeArrangement.Horizontal
-                }),
-                'undoManager.isEnabled': true // アンドゥ・リドゥ有効化
-            });
-
-            // 通常ノードのテンプレート
-            myDiagram.nodeTemplate = new go.Node(go.Panel.Auto)
-                .add(
-                    new go.Shape('Rectangle', { fill: 'white' }),
-                    new go.TextBlock({ margin: 5 }).bind('text', 'key')
-                );
-
-            // "Bands"カテゴリ専用のテンプレート
-            // SimpleBandedTreeLayout.commitLayers によって視覚的なバンドを表示するために変更される
-            myDiagram.nodeTemplateMap.add(
-                'Bands',
-                new go.Part('Position', {
-                    isLayoutPositioned: false, // ただしドキュメント範囲内には収まる
-                    locationSpot: new go.Spot(0, 0, HORIZONTAL ? 0 : 16, HORIZONTAL ? 16 : 0), // ヘッダー高さを考慮
-                    layerName: 'Background',
-                    pickable: false,
-                    selectable: false,
-                    itemTemplate: new go.Panel(HORIZONTAL ? 'Vertical' : 'Horizontal')
-                        .bind('position', 'bounds', (b) => b.position)
-                        .add(
-                            new go.TextBlock({
-                                angle: HORIZONTAL ? 0 : 270,
-                                textAlign: 'center',
-                                wrap: go.Wrap.None,
-                                font: 'bold 11pt sans-serif',
-                                background: new go.Brush('Linear', { 0: 'aqua', 1: go.Brush.darken('aqua') })
-                            })
-                                .bind('text')
-                                // 回転を考慮して必ず"width"をバインドする
-                                .bind('width', 'bounds', (r) => (HORIZONTAL ? r.width : r.height)),
-                            // オプション1: 長方形のバンド表示
-                            new go.Shape({ stroke: null, strokeWidth: 0 })
-                                .bind('desiredSize', 'bounds', (r) => r.size)
-                                .bindObject('fill', 'itemIndex', (i) =>
-                                    i % 2 == 0 ? 'whitesmoke' : go.Brush.darken('whitesmoke')
-                                )
-                            // オプション2: セパレータ線（コメントアウトして選択可能）
-                        )
-                }).bind('itemArray')
-            );
-
-            // リンクのテンプレート（シンプルな黒線、矢印なし）
-            myDiagram.linkTemplate = new go.Link().add(new go.Shape());
-
-            // ツリー構造のノードデータ定義
-            var nodearray = [
-                {
-                    // バンドのヘッダー情報
-                    key: '_BANDS',
-                    category: 'Bands',
-                    itemArray: [
-                        { text: 'ゼロ' },
-                        { text: 'ワン' },
-                        { text: 'ツー' },
-                        { text: 'スリー' },
-                        { text: 'フォー' },
-                        { text: 'ファイブ' }
-                    ]
-                },
-                // 通常のツリーノード
-                { key: 'root' },
-                { key: 'oneB', parent: 'root' },
-                { key: 'twoA', parent: 'oneB' },
-                { key: 'twoC', parent: 'root' },
-                { key: 'threeC', parent: 'twoC' },
-                { key: 'threeD', parent: 'twoC' },
-                { key: 'fourB', parent: 'threeD' },
-                { key: 'fourC', parent: 'twoC' },
-                { key: 'fourD', parent: 'fourB' },
-                { key: 'twoD', parent: 'root' }
-            ];
-
-            myDiagram.model = new go.TreeModel(nodearray);
-        }
-
-        window.addEventListener('DOMContentLoaded', init);
+        // テスト実行
+        const timeline = new TimelineGenerator({
+            targetId: "timeline-container",
+            startDate: "2011-01",
+            endDate: "2015-12",
+            scale: "month",
+            projects: [],
+            links: []
+        });
+        timeline.render();
     </script>
+
 </body>
 
 </html>
