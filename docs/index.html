@@ -1,106 +1,154 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 
 <head>
-    <meta charset="UTF-8">
-    <title>GoJS 年代タイムライン</title>
-    <script src="https://unpkg.com/gojs@2.2.16/release/go.js"></script>
-    <script>
-        function init() {
-            const $ = go.GraphObject.make;
-
-            const myDiagram = $(go.Diagram, "myDiagramDiv", {
-                "undoManager.isEnabled": true,
-                layout: $(go.GridLayout, {
-                    wrappingColumn: 0,
-                    alignment: go.GridLayout.Position,
-                    cellSize: new go.Size(1, 1),
-                    spacing: new go.Size(0, 0)
-                })
-            });
-
-            // グループテンプレート（年代枠）
-            myDiagram.groupTemplate =
-                $(go.Group, "Vertical",
-                    {
-                        selectable: false,
-                        movable: false,
-                        locationSpot: go.Spot.TopLeft
-                    },
-                    new go.Binding("location", "loc", go.Point.parse),
-                    $(go.TextBlock,
-                        { font: "Bold 12pt Sans-Serif", margin: 5 },
-                        new go.Binding("text", "key")),
-                    $(go.Shape, "Rectangle",
-                        {
-                            name: "PH",
-                            fill: "lightgray",
-                            stroke: "black",
-                            strokeWidth: 2,
-                            strokeDashArray: [3, 2], // 点線の設定
-                            desiredSize: new go.Size(300, 500) // 高さを図全体に合わせる
-                        })
-                );
-
-            // ノードテンプレート（プロジェクト）
-            myDiagram.nodeTemplate =
-                $(go.Node, "Auto",
-                    {
-                        dragComputation: stayInGroup
-                    },
-                    new go.Binding("location", "loc", go.Point.parse),
-                    $(go.Shape, "RoundedRectangle",
-                        { fill: "white", stroke: "black" }),
-                    $(go.TextBlock,
-                        { margin: 5 },
-                        new go.Binding("text", "name"))
-                );
-
-            // ノードの移動をグループ内に制限する関数
-            function stayInGroup(part, pt, gridpt) {
-                const grp = part.containingGroup;
-                if (grp === null) return pt;
-                const back = grp.findObject("PH");
-                if (back === null) return pt;
-                const p1 = back.getDocumentPoint(go.Spot.TopLeft);
-                const p2 = back.getDocumentPoint(go.Spot.BottomRight);
-                const b = part.actualBounds;
-                const loc = part.location;
-                // 新しい位置がグループの境界内に収まるように制限
-                const x = Math.max(p1.x, Math.min(pt.x, p2.x - b.width));
-                const y = Math.max(p1.y, Math.min(pt.y, p2.y - b.height));
-                return new go.Point(x, y);
-            }
-
-            // リンクテンプレート（プロジェクト間の接続）
-            myDiagram.linkTemplate =
-                $(go.Link,
-                    { routing: go.Link.Normal, curve: go.Link.Bezier },
-                    $(go.Shape, { strokeWidth: 2, stroke: "black" }),
-                    $(go.Shape, { toArrow: "Standard", stroke: null })
-                );
-
-            // モデルデータの設定
-            myDiagram.model = new go.GraphLinksModel(
-                [
-                    { key: "2011", isGroup: true, loc: "0 0" },
-                    { key: "2012", isGroup: true, loc: "300 0" },
-                    { key: "2013", isGroup: true, loc: "600 0" },
-                    { key: 1, name: "プロジェクトA", group: "2011", loc: "50 100" },
-                    { key: 2, name: "プロジェクトB", group: "2012", loc: "350 200" },
-                    { key: 3, name: "プロジェクトC", group: "2013", loc: "650 300" }
-                ],
-                [
-                    { from: 1, to: 2 },
-                    { from: 2, to: 3 }
-                ]
-            );
+    <meta charset="UTF-8" />
+    <title>バンド付きツリー図</title>
+    <script src="https://cdn.jsdelivr.net/npm/gojs@3.0.2/release/go.js"></script>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
         }
-    </script>
+
+        #myDiagramDiv {
+            width: 100%;
+            height: 100%;
+            border: 1px solid #333;
+        }
+    </style>
 </head>
 
-<body onload="init()">
-    <div id="myDiagramDiv" style="width:100%; height:600px; border:1px solid black"></div>
+<body>
+    <div id="myDiagramDiv"></div>
+
+    <script>
+        // レイアウトが水平でレイヤーバンドが垂直か、またはその逆かを制御する
+        var HORIZONTAL = true; // この定数はここでのみ設定可能、動的に変更は不可
+
+        // TreeLayoutを実行し、commitLayersをオーバーライドして背景の"_BANDS"パーツを更新
+        class SimpleBandedTreeLayout extends go.TreeLayout {
+            constructor(init) {
+                super();
+                this.layerStyle = go.TreeLayerStyle.Uniform; // 直線的なレイヤーに必要
+                if (init) Object.assign(this, init);
+            }
+
+            commitLayers(layerRects, offset) {
+                // バンドを保持する背景オブジェクトを更新
+                var bands = this.diagram.findPartForKey('_BANDS');
+                if (bands) {
+                    var model = this.diagram.model;
+                    bands.location = this.arrangementOrigin.copy().add(offset);
+
+                    // 各バンドの表示・非表示を設定（レイヤーの有無による）
+                    for (var it = bands.elements; it.next();) {
+                        var idx = it.key;
+                        var elt = it.value; // バンドを表すアイテムパネル
+                        elt.visible = idx < layerRects.length;
+                    }
+
+                    // 各バンドの範囲(bounds)をデータバインディングで設定
+                    var arr = bands.data.itemArray;
+                    for (var i = 0; i < layerRects.length; i++) {
+                        var itemdata = arr[i];
+                        if (itemdata) {
+                            model.setDataProperty(itemdata, 'bounds', layerRects[i]);
+                        }
+                    }
+                }
+            }
+        }
+        // SimpleBandedTreeLayoutクラス終了
+
+        function init() {
+            myDiagram = new go.Diagram('myDiagramDiv', {
+                layout: new SimpleBandedTreeLayout({ // 上で定義したカスタムレイアウト
+                    angle: HORIZONTAL ? 0 : 90,
+                    arrangement: HORIZONTAL ? go.TreeArrangement.Vertical : go.TreeArrangement.Horizontal
+                }),
+                'undoManager.isEnabled': true // アンドゥ・リドゥ有効化
+            });
+
+            // 通常ノードのテンプレート
+            myDiagram.nodeTemplate = new go.Node(go.Panel.Auto)
+                .add(
+                    new go.Shape('Rectangle', { fill: 'white' }),
+                    new go.TextBlock({ margin: 5 }).bind('text', 'key')
+                );
+
+            // "Bands"カテゴリ専用のテンプレート
+            // SimpleBandedTreeLayout.commitLayers によって視覚的なバンドを表示するために変更される
+            myDiagram.nodeTemplateMap.add(
+                'Bands',
+                new go.Part('Position', {
+                    isLayoutPositioned: false, // ただしドキュメント範囲内には収まる
+                    locationSpot: new go.Spot(0, 0, HORIZONTAL ? 0 : 16, HORIZONTAL ? 16 : 0), // ヘッダー高さを考慮
+                    layerName: 'Background',
+                    pickable: false,
+                    selectable: false,
+                    itemTemplate: new go.Panel(HORIZONTAL ? 'Vertical' : 'Horizontal')
+                        .bind('position', 'bounds', (b) => b.position)
+                        .add(
+                            new go.TextBlock({
+                                angle: HORIZONTAL ? 0 : 270,
+                                textAlign: 'center',
+                                wrap: go.Wrap.None,
+                                font: 'bold 11pt sans-serif',
+                                background: new go.Brush('Linear', { 0: 'aqua', 1: go.Brush.darken('aqua') })
+                            })
+                                .bind('text')
+                                // 回転を考慮して必ず"width"をバインドする
+                                .bind('width', 'bounds', (r) => (HORIZONTAL ? r.width : r.height)),
+                            // オプション1: 長方形のバンド表示
+                            new go.Shape({ stroke: null, strokeWidth: 0 })
+                                .bind('desiredSize', 'bounds', (r) => r.size)
+                                .bindObject('fill', 'itemIndex', (i) =>
+                                    i % 2 == 0 ? 'whitesmoke' : go.Brush.darken('whitesmoke')
+                                )
+                            // オプション2: セパレータ線（コメントアウトして選択可能）
+                        )
+                }).bind('itemArray')
+            );
+
+            // リンクのテンプレート（シンプルな黒線、矢印なし）
+            myDiagram.linkTemplate = new go.Link().add(new go.Shape());
+
+            // ツリー構造のノードデータ定義
+            var nodearray = [
+                {
+                    // バンドのヘッダー情報
+                    key: '_BANDS',
+                    category: 'Bands',
+                    itemArray: [
+                        { text: 'ゼロ' },
+                        { text: 'ワン' },
+                        { text: 'ツー' },
+                        { text: 'スリー' },
+                        { text: 'フォー' },
+                        { text: 'ファイブ' }
+                    ]
+                },
+                // 通常のツリーノード
+                { key: 'root' },
+                { key: 'oneB', parent: 'root' },
+                { key: 'twoA', parent: 'oneB' },
+                { key: 'twoC', parent: 'root' },
+                { key: 'threeC', parent: 'twoC' },
+                { key: 'threeD', parent: 'twoC' },
+                { key: 'fourB', parent: 'threeD' },
+                { key: 'fourC', parent: 'twoC' },
+                { key: 'fourD', parent: 'fourB' },
+                { key: 'twoD', parent: 'root' }
+            ];
+
+            myDiagram.model = new go.TreeModel(nodearray);
+        }
+
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
 
 </html>
