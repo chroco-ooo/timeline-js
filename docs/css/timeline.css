@@ -44,8 +44,24 @@ body {
 #timeline-container .timeline-grid {
   display: grid;
   grid-auto-rows: 120px;
+  position: relative;
 }
 #timeline-container .timeline-grid .grid-cell {
   border-right: 1px solid #e0e0e0;
   border-bottom: 1px solid #e0e0e0;
+}
+#timeline-container .timeline-grid .project-box {
+  position: absolute;
+  padding: 6px;
+  font-size: 14px;
+  color: #333;
+  background: #90caf9;
+  border-radius: 5px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 30px;
+  line-height: 30px;
+  top: 10px;
 }/*# sourceMappingURL=timeline.css.map */
