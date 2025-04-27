@@ -18,8 +18,7 @@
 
 ## デモイメージ
 
-![Timeline Generator Demo](demo-image.png)  
-※（ここに後でデモ画像を貼ってください）
+![Timeline Generator Demo](thumbnail.png)  
 
 ---
 
