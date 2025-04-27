@@ -145,10 +145,15 @@ class TimelineGenerator {
 
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("id", "timeline-svg");
-    svg.setAttribute(
-      "style",
-      "position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"
-    );
+
+    const gridDiv = document.getElementById("timeline-grid");
+    svg.style.position = "absolute";
+    svg.style.top = "0";
+    svg.style.left = "0";
+    svg.style.pointerEvents = "none";
+    svg.style.width = gridDiv.scrollWidth + "px";
+    svg.style.height = gridDiv.scrollHeight + "px";
+
     svg.innerHTML = `
         <defs>
             <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
@@ -156,6 +161,8 @@ class TimelineGenerator {
             </marker>
         </defs>
     `;
+
+    const headerHeight = 50 + 30; // 年（50px）＋月（30px）
 
     this.links.forEach((link) => {
       const from = document.getElementById(`project-${link.from}`);
@@ -167,14 +174,11 @@ class TimelineGenerator {
         return;
       }
 
-      const fromRect = from.getBoundingClientRect();
-      const toRect = to.getBoundingClientRect();
-      const containerRect = container.getBoundingClientRect();
+      const x1 = from.offsetLeft + from.offsetWidth;
+      const y1 = from.offsetTop + from.offsetHeight / 2 + headerHeight;
 
-      const x1 = fromRect.right - containerRect.left;
-      const y1 = fromRect.top + fromRect.height / 2 - containerRect.top;
-      const x2 = toRect.left - containerRect.left;
-      const y2 = toRect.top + toRect.height / 2 - containerRect.top;
+      const x2 = to.offsetLeft;
+      const y2 = to.offsetTop + to.offsetHeight / 2 + headerHeight;
 
       const line = document.createElementNS(
         "http://www.w3.org/2000/svg",
