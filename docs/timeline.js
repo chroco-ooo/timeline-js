@@ -180,11 +180,11 @@ class TimelineGenerator {
       const x2 = to.offsetLeft;
       const y2 = to.offsetTop + to.offsetHeight / 2 + headerHeight;
 
-      const distanceX = x2 - x1;
+      const distanceX = Math.abs(x2 - x1);
       let deltaX;
 
       if (distanceX < 100) {
-        deltaX = distanceX * 8;
+        deltaX = distanceX * 6;
       // } else if (distanceX < 600) {
       //   deltaX = distanceX * 4;
       } else {
