@@ -162,7 +162,7 @@ class TimelineGenerator {
         </defs>
     `;
 
-    const headerHeight = 50 + 30; // 年（50px）＋月（30px）
+    const headerHeight = 50 + 30;
 
     this.links.forEach((link) => {
       const from = document.getElementById(`project-${link.from}`);
@@ -180,19 +180,36 @@ class TimelineGenerator {
       const x2 = to.offsetLeft;
       const y2 = to.offsetTop + to.offsetHeight / 2 + headerHeight;
 
-      const line = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "line"
-      );
-      line.setAttribute("x1", x1);
-      line.setAttribute("y1", y1);
-      line.setAttribute("x2", x2);
-      line.setAttribute("y2", y2);
-      line.setAttribute("stroke", "gray");
-      line.setAttribute("stroke-width", "2");
-      line.setAttribute("marker-end", "url(#arrowhead)");
+      const distanceX = x2 - x1;
+      let deltaX;
 
-      svg.appendChild(line);
+      if (distanceX < 100) {
+        deltaX = distanceX * 8;
+      // } else if (distanceX < 600) {
+      //   deltaX = distanceX * 4;
+      } else {
+        deltaX = distanceX * 0.5;
+      }
+
+      const c1x = x1 + deltaX;
+      const c1y = y1;
+      const c2x = x2 - deltaX;
+      const c2y = y2;
+
+      const path = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "path"
+      );
+      path.setAttribute(
+        "d",
+        `M ${x1} ${y1} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${x2} ${y2}`
+      );
+      path.setAttribute("stroke", "gray");
+      path.setAttribute("stroke-width", "2");
+      path.setAttribute("fill", "none");
+      path.setAttribute("marker-end", "url(#arrowhead)");
+
+      svg.appendChild(path);
     });
 
     container.appendChild(svg);
