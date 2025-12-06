@@ -1,5 +1,8 @@
 class TimelineGenerator {
   constructor(options) {
+    // projects: タイムライン上に描画するボックス群。
+    // links: プロジェクトIDを from / to で結ぶ矢印。ID に対応するボックスがない場合は警告を出してスキップする。
+    //        (空配列でも実行可能で、描画は省略される)
     this.targetId = options.targetId;
     this.startDate = options.startDate;
     this.endDate = options.endDate;
@@ -81,8 +84,10 @@ class TimelineGenerator {
       gridDiv.appendChild(box);
     });
 
-    // 接続線を描画
-    this.drawConnections(container);
+    // 接続線を描画（リンクが存在するときのみ）
+    if (this.links && this.links.length > 0) {
+      this.drawConnections(container);
+    }
   }
 
   generateMonths() {
@@ -143,10 +148,18 @@ class TimelineGenerator {
       existingSvg.remove();
     }
 
+    if (!Array.isArray(this.links) || this.links.length === 0) {
+      return;
+    }
+
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("id", "timeline-svg");
 
     const gridDiv = document.getElementById("timeline-grid");
+    if (!gridDiv) {
+      console.warn("グリッド要素が見つからないため、接続線の描画をスキップします");
+      return;
+    }
     svg.style.position = "absolute";
     svg.style.top = "0";
     svg.style.left = "0";
