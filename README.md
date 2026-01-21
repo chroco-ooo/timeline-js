@@ -89,6 +89,7 @@ timeline.render();
 | scale | 任意 | `"month"` or `"year"`（デフォルトは"month"） |
 | projects | 必須 | プロジェクト情報配列（下記参照） |
 | links | 任意 | プロジェクト間の接続線情報配列 |
+| onProjectClick | 任意 | プロジェクトボックスがクリックされた時のコールバック |
 
 ---
 
@@ -105,6 +106,25 @@ timeline.render();
   lane: 1,          // レーン番号（上から順番に）
   color: "#4fc3f7"  // 任意：ボックスの色
 }
+```
+
+### クリックイベントのコールバック
+
+プロジェクトボックスにクリックイベントをバインドしたい場合は `onProjectClick` を指定します。
+
+```javascript
+const timeline = new TimelineGenerator({
+  targetId: "timeline-container",
+  startDate: "2011-01",
+  endDate: "2015-12",
+  scale: "month",
+  projects,
+  links,
+  onProjectClick: ({ event, project, element }) => {
+    console.log("Clicked", project, element);
+    event.preventDefault();
+  },
+});
 ```
 
 ---
@@ -140,4 +160,3 @@ MIT License
 
 - Timeline Generator 開発者
 - お問い合わせ：[ここに連絡先やGitHubアカウントなどを記載可能]
-
