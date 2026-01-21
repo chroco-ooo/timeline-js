@@ -29,7 +29,6 @@
 ```
 /project-directory/
 ├── index.html
-├── timeline.scss  （SCSSファイル）
 ├── timeline.css    （SCSSをコンパイルしたCSSファイル）
 └── timeline.js
 ```
