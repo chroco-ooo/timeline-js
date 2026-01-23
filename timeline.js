@@ -9,6 +9,8 @@ class TimelineGenerator {
     this.scale = options.scale || "month";
     this.projects = options.projects || [];
     this.links = options.links || [];
+    this.minLaneCount = Number.isFinite(options.minLaneCount) ? options.minLaneCount : 5;
+    this.maxLaneCount = Number.isFinite(options.maxLaneCount) ? options.maxLaneCount : 10;
     this.onProjectClick = typeof options.onProjectClick === "function"
       ? options.onProjectClick
       : null;
@@ -24,7 +26,9 @@ class TimelineGenerator {
       : [];
     const maxLane = lanes.length > 0 ? Math.max(...lanes) : 0;
     const baseCount = Math.max(maxLane, this.projects.length || 0);
-    return Math.min(10, Math.max(5, baseCount));
+    const minLaneCount = Math.max(1, this.minLaneCount);
+    const maxLaneCount = Math.max(minLaneCount, this.maxLaneCount);
+    return Math.min(maxLaneCount, Math.max(minLaneCount, baseCount));
   }
 
   render() {
@@ -169,6 +173,17 @@ class TimelineGenerator {
       return result;
     }
 
+    if (this.scale === "quarter") {
+      current.setMonth(current.getMonth() - this.startMonthPadding * 3);
+      end.setMonth(end.getMonth() + this.endMonthPadding * 3);
+
+      while (current <= end) {
+        result.push(this.formatDate(current));
+        current.setMonth(current.getMonth() + 3);
+      }
+      return result;
+    }
+
     if (this.scale === "year") {
       current.setFullYear(current.getFullYear() - this.startMonthPadding);
       end.setFullYear(end.getFullYear() + this.endMonthPadding);
@@ -220,7 +235,18 @@ class TimelineGenerator {
   }
 
   parseDate(str) {
-    const parts = str.split("-").map(Number);
+    const trimmed = String(str || "").trim();
+    if (!trimmed) {
+      return new Date();
+    }
+    if (trimmed.includes("Q")) {
+      const [yearText, quarterText] = trimmed.split("-Q");
+      const year = Number(yearText);
+      const quarter = Number(quarterText);
+      const month = Number.isFinite(quarter) ? (quarter - 1) * 3 + 1 : 1;
+      return new Date(year, Math.max(month - 1, 0), 1);
+    }
+    const parts = trimmed.split("-").map(Number);
     const year = parts[0];
     const month = parts[1] || 1;
     const day = parts[2] || 1;
@@ -234,6 +260,10 @@ class TimelineGenerator {
       const d = date.getDate().toString().padStart(2, "0");
       return `${y}-${m}-${d}`;
     }
+    if (this.scale === "quarter") {
+      const quarter = Math.floor(date.getMonth() / 3) + 1;
+      return `${y}-Q${quarter}`;
+    }
     if (this.scale === "year") {
       return `${y}`;
     }
@@ -243,6 +273,15 @@ class TimelineGenerator {
   getColumnLabel(column) {
     if (this.scale === "day") {
       return column.substring(8);
+    }
+    if (this.scale === "quarter") {
+      const quarterText = column.split("-Q")[1];
+      const quarter = Number(quarterText);
+      if (!Number.isNaN(quarter) && quarter >= 1 && quarter <= 4) {
+        const month = (quarter - 1) * 3 + 1;
+        return `${month}月`;
+      }
+      return column;
     }
     if (this.scale === "year") {
       return column;

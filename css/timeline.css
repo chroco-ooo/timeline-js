@@ -165,6 +165,19 @@ body {
     padding: 0;
 }
 
+.timeline-scroll {
+    cursor: grab;
+}
+
+.timeline-scroll.is-dragging {
+    cursor: grabbing;
+    user-select: none;
+}
+
+.timeline-scroll.is-dragging * {
+    user-select: none;
+}
+
 .timeline-chip {
     display: inline-flex;
     align-items: center;
