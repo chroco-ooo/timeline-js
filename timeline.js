@@ -33,10 +33,10 @@ class TimelineGenerator {
     monthsDiv.innerHTML = "";
     gridDiv.innerHTML = "";
 
-    const months = this.generateMonths();
-    const years = this.generateYears(months);
+    const columns = this.generateColumns();
+    const years = this.generateHeaderGroups(columns);
 
-    const columnCount = months.length;
+    const columnCount = columns.length;
     yearsDiv.style.gridTemplateColumns = `repeat(${columnCount}, ${this.columnWidth}px)`;
     monthsDiv.style.gridTemplateColumns = `repeat(${columnCount}, ${this.columnWidth}px)`;
     gridDiv.style.gridTemplateColumns = `repeat(${columnCount}, ${this.columnWidth}px)`;
@@ -46,7 +46,7 @@ class TimelineGenerator {
     years.forEach((yearData) => {
       const cell = document.createElement("div");
       cell.className = "year-cell";
-      cell.innerText = yearData.year;
+      cell.innerText = yearData.label;
       if (yearData.year === currentYear) {
         cell.classList.add("year-cell-current");
       }
@@ -54,23 +54,23 @@ class TimelineGenerator {
       yearsDiv.appendChild(cell);
     });
 
-    months.forEach((month) => {
+    columns.forEach((column) => {
       const cell = document.createElement("div");
       cell.className = "month-cell";
-      cell.innerText = month.substring(5);
+      cell.innerText = this.getColumnLabel(column);
       monthsDiv.appendChild(cell);
     });
 
     this.headerHeight = yearsDiv.offsetHeight + monthsDiv.offsetHeight;
 
     // グリッド作成
-    for (let i = 0; i < months.length * 5; i++) {
+    for (let i = 0; i < columns.length * 5; i++) {
       const cell = document.createElement("div");
       cell.className = "grid-cell";
       gridDiv.appendChild(cell);
     }
 
-    this.renderTodayIndicator(months, container, gridDiv);
+    this.renderTodayIndicator(columns, container, gridDiv);
 
     // プロジェクトボックス配置
     this.projects.forEach((project) => {
@@ -104,8 +104,8 @@ class TimelineGenerator {
         });
       }
 
-      const startIndex = this.getMonthIndex(months, project.start);
-      const endIndex = this.getMonthIndex(months, project.end);
+      const startIndex = this.getColumnIndex(columns, project.start);
+      const endIndex = this.getColumnIndex(columns, project.end);
 
       if (startIndex === -1 || endIndex === -1) {
         console.warn(
@@ -142,10 +142,32 @@ class TimelineGenerator {
     return Math.min(360, Math.max(140, baseWidth + trimmed.length * charWidth));
   }
 
-  generateMonths() {
+  generateColumns() {
     const result = [];
     let current = this.parseDate(this.startDate);
     const end = this.parseDate(this.endDate);
+
+    if (this.scale === "day") {
+      current.setDate(current.getDate() - this.startMonthPadding);
+      end.setDate(end.getDate() + this.endMonthPadding);
+
+      while (current <= end) {
+        result.push(this.formatDate(current));
+        current.setDate(current.getDate() + 1);
+      }
+      return result;
+    }
+
+    if (this.scale === "year") {
+      current.setFullYear(current.getFullYear() - this.startMonthPadding);
+      end.setFullYear(end.getFullYear() + this.endMonthPadding);
+
+      while (current <= end) {
+        result.push(this.formatDate(current));
+        current.setFullYear(current.getFullYear() + 1);
+      }
+      return result;
+    }
 
     current.setMonth(current.getMonth() - this.startMonthPadding);
     end.setMonth(end.getMonth() + this.endMonthPadding);
@@ -157,44 +179,64 @@ class TimelineGenerator {
     return result;
   }
 
-  generateYears(months) {
-    const years = [];
-    let currentYear = null;
+  generateHeaderGroups(columns) {
+    const headers = [];
+    let currentKey = null;
     let spanCount = 0;
 
-    months.forEach((month) => {
-      const year = month.substring(0, 4);
-      if (year !== currentYear) {
-        if (currentYear !== null) {
-          years.push({ year: currentYear, span: spanCount });
+    columns.forEach((column) => {
+      const headerKey = this.scale === "day" ? column.substring(0, 7) : column.substring(0, 4);
+      if (headerKey !== currentKey) {
+        if (currentKey !== null) {
+          headers.push({ label: currentKey, year: currentKey.substring(0, 4), span: spanCount });
         }
-        currentYear = year;
+        currentKey = headerKey;
         spanCount = 1;
       } else {
         spanCount++;
       }
     });
 
-    if (currentYear !== null) {
-      years.push({ year: currentYear, span: spanCount });
+    if (currentKey !== null) {
+      headers.push({ label: currentKey, year: currentKey.substring(0, 4), span: spanCount });
     }
 
-    return years;
+    return headers;
   }
 
-  getMonthIndex(months, target) {
-    return months.indexOf(target);
+  getColumnIndex(columns, target) {
+    return columns.indexOf(target);
   }
 
   parseDate(str) {
-    const [year, month] = str.split("-").map(Number);
-    return new Date(year, (month || 1) - 1);
+    const parts = str.split("-").map(Number);
+    const year = parts[0];
+    const month = parts[1] || 1;
+    const day = parts[2] || 1;
+    return new Date(year, month - 1, day);
   }
 
   formatDate(date) {
     const y = date.getFullYear();
     const m = (date.getMonth() + 1).toString().padStart(2, "0");
+    if (this.scale === "day") {
+      const d = date.getDate().toString().padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+    if (this.scale === "year") {
+      return `${y}`;
+    }
     return `${y}-${m}`;
+  }
+
+  getColumnLabel(column) {
+    if (this.scale === "day") {
+      return column.substring(8);
+    }
+    if (this.scale === "year") {
+      return column;
+    }
+    return column.substring(5);
   }
 
   drawConnections(container) {
@@ -283,7 +325,7 @@ class TimelineGenerator {
     gridDiv.appendChild(svg);
   }
 
-  renderTodayIndicator(months, container, gridDiv) {
+  renderTodayIndicator(columns, container, gridDiv) {
     if (!container || !gridDiv) {
       return;
     }
@@ -294,7 +336,7 @@ class TimelineGenerator {
       existingMarker.remove();
     }
 
-    if (!months || months.length === 0) {
+    if (!columns || columns.length === 0) {
       if (todayLabel) {
         todayLabel.textContent = "今日の位置を計算できませんでした";
       }
@@ -302,7 +344,7 @@ class TimelineGenerator {
     }
 
     const todayKey = this.formatDate(new Date());
-    const monthIndex = months.indexOf(todayKey);
+    const monthIndex = columns.indexOf(todayKey);
 
     if (todayLabel) {
       todayLabel.textContent = `今日: ${todayKey}`;

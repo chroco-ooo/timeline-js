@@ -29,6 +29,7 @@
 ```
 /project-directory/
 ├── index.html
+├── timeline.scss  （SCSSファイル）
 ├── timeline.css    （SCSSをコンパイルしたCSSファイル）
 └── timeline.js
 ```
@@ -83,9 +84,9 @@ timeline.render();
 | オプション | 必須 | 説明 |
 |:---|:---|:---|
 | targetId | 必須 | タイムラインを描画する対象divのID |
-| startDate | 必須 | 開始年月 (`"YYYY-MM"` 形式) |
-| endDate | 必須 | 終了年月 (`"YYYY-MM"` 形式) |
-| scale | 任意 | `"month"` or `"year"`（デフォルトは"month"） |
+| startDate | 必須 | 開始年月 (`"YYYY-MM"` 形式)、日単位の場合は `"YYYY-MM-DD"`、年単位の場合は `"YYYY"` |
+| endDate | 必須 | 終了年月 (`"YYYY-MM"` 形式)、日単位の場合は `"YYYY-MM-DD"`、年単位の場合は `"YYYY"` |
+| scale | 任意 | `"day"`, `"month"`, `"year"`（デフォルトは"month"） |
 | projects | 必須 | プロジェクト情報配列（下記参照） |
 | links | 任意 | プロジェクト間の接続線情報配列 |
 | onProjectClick | 任意 | プロジェクトボックスがクリックされた時のコールバック |
@@ -100,8 +101,8 @@ timeline.render();
 {
   id: "p1",         // ユニークなID
   name: "名前",      // 表示名
-  start: "2011-02", // 開始年月
-  end: "2011-06",   // 終了年月
+  start: "2011-02", // 開始年月（dayの場合は"YYYY-MM-DD"、yearの場合は"YYYY"）
+  end: "2011-06",   // 終了年月（dayの場合は"YYYY-MM-DD"、yearの場合は"YYYY"）
   lane: 1,          // レーン番号（上から順番に）
   color: "#4fc3f7"  // 任意：ボックスの色
 }
