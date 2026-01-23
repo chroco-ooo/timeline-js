@@ -18,6 +18,15 @@ class TimelineGenerator {
     this.endMonthPadding = 5;
   }
 
+  resolveLaneCount() {
+    const lanes = Array.isArray(this.projects)
+      ? this.projects.map((project) => Number(project.lane) || 0)
+      : [];
+    const maxLane = lanes.length > 0 ? Math.max(...lanes) : 0;
+    const baseCount = Math.max(maxLane, this.projects.length || 0);
+    return Math.min(10, Math.max(5, baseCount));
+  }
+
   render() {
     const container = document.getElementById(this.targetId);
     if (!container) {
@@ -35,11 +44,13 @@ class TimelineGenerator {
 
     const columns = this.generateColumns();
     const years = this.generateHeaderGroups(columns);
+    const laneCount = this.resolveLaneCount();
 
     const columnCount = columns.length;
     yearsDiv.style.gridTemplateColumns = `repeat(${columnCount}, ${this.columnWidth}px)`;
     monthsDiv.style.gridTemplateColumns = `repeat(${columnCount}, ${this.columnWidth}px)`;
     gridDiv.style.gridTemplateColumns = `repeat(${columnCount}, ${this.columnWidth}px)`;
+    gridDiv.style.gridTemplateRows = `repeat(${laneCount}, 80px)`;
 
     // 年・月ラベル
     const currentYear = String(new Date().getFullYear());
@@ -64,7 +75,7 @@ class TimelineGenerator {
     this.headerHeight = yearsDiv.offsetHeight + monthsDiv.offsetHeight;
 
     // グリッド作成
-    for (let i = 0; i < columns.length * 5; i++) {
+    for (let i = 0; i < columns.length * laneCount; i++) {
       const cell = document.createElement("div");
       cell.className = "grid-cell";
       gridDiv.appendChild(cell);
