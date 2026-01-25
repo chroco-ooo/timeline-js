@@ -67,9 +67,10 @@ const timeline = new TimelineGenerator({
     endDate: "2015-12",
     scale: "month",
     projects: [
-        { id: "p1", name: "プロジェクトA", start: "2011-02", end: "2011-06", lane: 1, color: "#4fc3f7" },
-        { id: "p2", name: "プロジェクトB", start: "2012-05", end: "2013-03", lane: 2, color: "#81c784" },
-        { id: "p3", name: "プロジェクトC", start: "2013-08", end: "2014-04", lane: 1, color: "#ffb74d" }
+        // end は範囲外チェックに使われるため、start と同じ月でもOK
+        { id: "p1", name: "プロジェクトA", start: "2011-02", end: "2011-02", lane: 1, color: "#4fc3f7" },
+        { id: "p2", name: "プロジェクトB", start: "2012-05", end: "2012-05", lane: 2, color: "#81c784" },
+        { id: "p3", name: "プロジェクトC", start: "2013-08", end: "2013-08", lane: 1, color: "#ffb74d" }
     ],
     links: [
         { from: "p1", to: "p2" },
