@@ -11,6 +11,9 @@ class TimelineGenerator {
     this.links = options.links || [];
     this.minLaneCount = Number.isFinite(options.minLaneCount) ? options.minLaneCount : 5;
     this.maxLaneCount = Number.isFinite(options.maxLaneCount) ? options.maxLaneCount : 10;
+    this.clickMode = options.clickMode === "link" ? "link" : "event";
+    this.linkTarget = options.linkTarget || "_blank";
+    this.linkRel = options.linkRel || "noopener";
     this.onProjectClick = typeof options.onProjectClick === "function"
       ? options.onProjectClick
       : null;
@@ -89,11 +92,17 @@ class TimelineGenerator {
 
     // プロジェクトボックス配置
     this.projects.forEach((project) => {
-      const box = document.createElement("div");
+      const isLinkMode = this.clickMode === "link" && project.url;
+      const box = document.createElement(isLinkMode ? "a" : "div");
       box.className = "project-box";
       box.id = `project-${project.id}`;
       box.setAttribute("aria-label", project.name || "");
       box.dataset.projectId = project.id;
+      if (isLinkMode) {
+        box.href = project.url;
+        box.target = this.linkTarget;
+        box.rel = this.linkRel;
+      }
 
       const label = document.createElement("div");
       label.className = "project-label";
@@ -112,7 +121,7 @@ class TimelineGenerator {
         box.style.backgroundColor = project.color;
       }
 
-      if (this.onProjectClick) {
+      if (!isLinkMode && this.onProjectClick) {
         box.classList.add("project-box-clickable");
         box.addEventListener("click", (event) => {
           this.onProjectClick({ event, project, element: box });
