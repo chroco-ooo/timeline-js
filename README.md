@@ -29,14 +29,15 @@
 ```
 /project-directory/
 ├── index.html
-├── timeline.css
+├── css/
+│   └── timeline.css
 └── timeline.js
 ```
 
 ### 読み込み例
 
 ```html
-<link rel="stylesheet" href="timeline.css">
+<link rel="stylesheet" href="./css/timeline.css">
 <script src="timeline.js"></script>
 ```
 
@@ -52,6 +53,9 @@
     <div id="timeline-months" class="timeline-section timeline-months"></div>
     <div id="timeline-grid" class="timeline-section timeline-grid"></div>
 </div>
+
+<!-- 任意: 今日の位置をテキスト表示する場合 -->
+<p id="timeline-today-label"></p>
 ```
 
 ### JavaScript側
@@ -85,10 +89,15 @@ timeline.render();
 | targetId | 必須 | タイムラインを描画する対象divのID |
 | startDate | 必須 | 開始年月 (`"YYYY-MM"` 形式)、日単位の場合は `"YYYY-MM-DD"`、年単位の場合は `"YYYY"` |
 | endDate | 必須 | 終了年月 (`"YYYY-MM"` 形式)、日単位の場合は `"YYYY-MM-DD"`、年単位の場合は `"YYYY"` |
-| scale | 任意 | `"day"`, `"month"`, `"year"`（デフォルトは"month"） |
+| scale | 任意 | `"day"`, `"month"`, `"quarter"`, `"year"`（デフォルトは"month"） |
 | projects | 必須 | プロジェクト情報配列（下記参照） |
 | links | 任意 | プロジェクト間の接続線情報配列 |
 | onProjectClick | 任意 | プロジェクトボックスがクリックされた時のコールバック |
+| minLaneCount | 任意 | レーン数の最小値（デフォルト: 5） |
+| maxLaneCount | 任意 | レーン数の最大値（デフォルト: 10） |
+| clickMode | 任意 | `"event"` or `"link"`。`"link"`の場合は `url` を持つプロジェクトをアンカー表示（デフォルト: `"event"`） |
+| linkTarget | 任意 | `clickMode: "link"` の場合の `target` 属性（デフォルト: `"_blank"`） |
+| linkRel | 任意 | `clickMode: "link"` の場合の `rel` 属性（デフォルト: `"noopener"`） |
 
 ---
 
@@ -100,16 +109,20 @@ timeline.render();
 {
   id: "p1",         // ユニークなID
   name: "名前",      // 表示名
-  start: "2011-02", // 開始年月（dayの場合は"YYYY-MM-DD"、yearの場合は"YYYY"）
-  end: "2011-06",   // 終了年月（dayの場合は"YYYY-MM-DD"、yearの場合は"YYYY"）
+  start: "2011-02", // 開始年月（dayの場合は"YYYY-MM-DD"、quarterの場合は"YYYY-Q1"、yearの場合は"YYYY"）
+  end: "2011-06",   // 終了年月（dayの場合は"YYYY-MM-DD"、quarterの場合は"YYYY-Q1"、yearの場合は"YYYY"）
   lane: 1,          // レーン番号（上から順番に）
-  color: "#4fc3f7"  // 任意：ボックスの色
+  color: "#4fc3f7", // 任意：ボックスの色
+  url: "https://example.com", // 任意：clickMode が "link" のときにリンク先として使用
+  backgroundImage: "https://example.com/icon.png" // 任意：アイコン画像
 }
 ```
 
 ### クリックイベントのコールバック
 
 プロジェクトボックスにクリックイベントをバインドしたい場合は `onProjectClick` を指定します。
+`clickMode: "link"` の場合は、`url` を持つプロジェクトがアンカー要素として描画されるため、
+`onProjectClick` は実行されません。
 
 ```javascript
 const timeline = new TimelineGenerator({
@@ -146,6 +159,7 @@ const timeline = new TimelineGenerator({
 - **timeline.scss** を使う場合、必ずCSSにコンパイルしてから読み込んでください。
 - コンテナ要素（例：`#timeline-container`）は **`position: relative;`** を指定してください。
 - **年（50px）＋月（30px）**の固定ヘッダー高さを基準に線を描画しています（カスタマイズする場合はコード側も調整してください）。
+- プロジェクトの `start` / `end` がタイムライン範囲外の場合は警告を出して描画をスキップします。
 
 ---
 
