@@ -20,7 +20,7 @@ class TimelineGenerator {
     this.columnWidth = 120;
     this.headerHeight = 80; // years (50px) + months (30px)
     this.startMonthPadding = 2;
-    this.endMonthPadding = 5;
+    this.endMonthPadding = 2;
   }
 
   resolveLaneCount() {
