@@ -21,6 +21,26 @@ class TimelineGenerator {
     this.headerHeight = 80; // years (50px) + months (30px)
     this.startMonthPadding = 2;
     this.endMonthPadding = 2;
+    this.startHourPadding = 6;
+    this.endHourPadding = 6;
+    this.virtualScrollThreshold = Number.isFinite(options.virtualScrollThreshold)
+      ? Number(options.virtualScrollThreshold)
+      : 180;
+    this.virtualColumnBuffer = Number.isFinite(options.virtualColumnBuffer)
+      ? Math.max(4, Number(options.virtualColumnBuffer))
+      : 12;
+    this.virtualWindowStart = 0;
+    this.virtualWindowEnd = 0;
+    this.allColumns = [];
+    this.laneCount = 0;
+    this.container = null;
+    this.yearsDiv = null;
+    this.monthsDiv = null;
+    this.gridDiv = null;
+    this.isVirtualScrollEnabled = false;
+    this.scrollContainer = null;
+    this.virtualScrollHandler = null;
+    this.rafId = null;
   }
 
   resolveLaneCount() {
@@ -45,21 +65,122 @@ class TimelineGenerator {
     const monthsDiv = document.getElementById("timeline-months");
     const gridDiv = document.getElementById("timeline-grid");
 
+    this.container = container;
+    this.yearsDiv = yearsDiv;
+    this.monthsDiv = monthsDiv;
+    this.gridDiv = gridDiv;
+
     yearsDiv.innerHTML = "";
     monthsDiv.innerHTML = "";
     gridDiv.innerHTML = "";
 
-    const columns = this.generateColumns();
+    this.allColumns = this.generateColumns();
+    this.laneCount = this.resolveLaneCount();
+    this.isVirtualScrollEnabled = this.allColumns.length > this.virtualScrollThreshold;
+
+    this.detachVirtualScroll();
+
+    if (this.isVirtualScrollEnabled) {
+      this.setupVirtualScroll();
+      return;
+    }
+
+    this.renderRange(0, this.allColumns.length);
+  }
+
+  setupVirtualScroll() {
+    const scrollContainer = this.resolveScrollContainer();
+    const totalWidth = this.allColumns.length * this.columnWidth;
+    this.container.style.width = `${totalWidth}px`;
+    this.virtualWindowStart = -1;
+    this.virtualWindowEnd = -1;
+
+    this.virtualScrollHandler = () => {
+      if (this.rafId !== null) {
+        cancelAnimationFrame(this.rafId);
+      }
+      this.rafId = requestAnimationFrame(() => {
+        this.rafId = null;
+        this.updateVirtualWindow();
+      });
+    };
+
+    if (scrollContainer) {
+      this.scrollContainer = scrollContainer;
+      this.scrollContainer.addEventListener("scroll", this.virtualScrollHandler, { passive: true });
+      window.addEventListener("resize", this.virtualScrollHandler);
+    }
+
+    this.updateVirtualWindow();
+  }
+
+  resolveScrollContainer() {
+    if (!this.container) return null;
+    return this.container.closest(".timeline-scroll") || this.container.parentElement;
+  }
+
+  updateVirtualWindow() {
+    const viewportWidth = this.scrollContainer?.clientWidth || this.container?.clientWidth || 0;
+    const scrollLeft = this.scrollContainer?.scrollLeft || 0;
+    const visibleStart = Math.floor(scrollLeft / this.columnWidth);
+    const visibleCount = Math.max(1, Math.ceil(viewportWidth / this.columnWidth));
+    const nextStart = Math.max(0, visibleStart - this.virtualColumnBuffer);
+    const nextEnd = Math.min(
+      this.allColumns.length,
+      visibleStart + visibleCount + this.virtualColumnBuffer
+    );
+
+    if (this.virtualWindowStart === nextStart && this.virtualWindowEnd === nextEnd) {
+      return;
+    }
+
+    this.virtualWindowStart = nextStart;
+    this.virtualWindowEnd = nextEnd;
+    this.renderRange(nextStart, nextEnd);
+  }
+
+  detachVirtualScroll() {
+    if (this.scrollContainer && this.virtualScrollHandler) {
+      this.scrollContainer.removeEventListener("scroll", this.virtualScrollHandler);
+    }
+    if (this.virtualScrollHandler) {
+      window.removeEventListener("resize", this.virtualScrollHandler);
+    }
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+    this.scrollContainer = null;
+    this.virtualScrollHandler = null;
+  }
+
+  renderRange(start, end) {
+    const columns = this.allColumns.slice(start, end);
     const years = this.generateHeaderGroups(columns);
-    const laneCount = this.resolveLaneCount();
-
     const columnCount = columns.length;
-    yearsDiv.style.gridTemplateColumns = `repeat(${columnCount}, ${this.columnWidth}px)`;
-    monthsDiv.style.gridTemplateColumns = `repeat(${columnCount}, ${this.columnWidth}px)`;
-    gridDiv.style.gridTemplateColumns = `repeat(${columnCount}, ${this.columnWidth}px)`;
-    gridDiv.style.gridTemplateRows = `repeat(${laneCount}, 80px)`;
+    const laneCount = this.laneCount;
 
-    // 年・月ラベル
+    this.yearsDiv.innerHTML = "";
+    this.monthsDiv.innerHTML = "";
+    this.gridDiv.innerHTML = "";
+
+    this.yearsDiv.style.gridTemplateColumns = `repeat(${columnCount}, ${this.columnWidth}px)`;
+    this.monthsDiv.style.gridTemplateColumns = `repeat(${columnCount}, ${this.columnWidth}px)`;
+    this.gridDiv.style.gridTemplateColumns = `repeat(${columnCount}, ${this.columnWidth}px)`;
+    this.gridDiv.style.gridTemplateRows = `repeat(${laneCount}, 80px)`;
+
+    const offsetX = start * this.columnWidth;
+    this.yearsDiv.style.transform = `translateX(${offsetX}px)`;
+    this.monthsDiv.style.transform = `translateX(${offsetX}px)`;
+    this.gridDiv.style.transform = `translateX(${offsetX}px)`;
+
+    if (!this.isVirtualScrollEnabled) {
+      this.container.style.width = "";
+      this.yearsDiv.style.transform = "";
+      this.monthsDiv.style.transform = "";
+      this.gridDiv.style.transform = "";
+    }
+
     const currentYear = String(new Date().getFullYear());
     years.forEach((yearData) => {
       const cell = document.createElement("div");
@@ -69,29 +190,39 @@ class TimelineGenerator {
         cell.classList.add("year-cell-current");
       }
       cell.style.gridColumn = `span ${yearData.span}`;
-      yearsDiv.appendChild(cell);
+      this.yearsDiv.appendChild(cell);
     });
 
     columns.forEach((column) => {
       const cell = document.createElement("div");
       cell.className = "month-cell";
       cell.innerText = this.getColumnLabel(column);
-      monthsDiv.appendChild(cell);
+      this.monthsDiv.appendChild(cell);
     });
 
-    this.headerHeight = yearsDiv.offsetHeight + monthsDiv.offsetHeight;
+    this.headerHeight = this.yearsDiv.offsetHeight + this.monthsDiv.offsetHeight;
 
-    // グリッド作成
     for (let i = 0; i < columns.length * laneCount; i++) {
       const cell = document.createElement("div");
       cell.className = "grid-cell";
-      gridDiv.appendChild(cell);
+      this.gridDiv.appendChild(cell);
     }
 
-    this.renderTodayIndicator(columns, container, gridDiv);
+    this.renderTodayIndicator(this.allColumns, this.container, this.gridDiv);
 
-    // プロジェクトボックス配置
     this.projects.forEach((project) => {
+      const startIndex = this.getColumnIndex(this.allColumns, project.start);
+      const endIndex = this.getColumnIndex(this.allColumns, project.end);
+
+      if (startIndex === -1 || endIndex === -1) {
+        console.warn(`プロジェクト ${project.id} の日付範囲がタイムライン範囲外です`);
+        return;
+      }
+
+      if (startIndex < start || startIndex >= end) {
+        return;
+      }
+
       const isLinkMode = this.clickMode === "link" && project.url;
       const box = document.createElement(isLinkMode ? "a" : "div");
       box.className = "project-box";
@@ -128,25 +259,13 @@ class TimelineGenerator {
         });
       }
 
-      const startIndex = this.getColumnIndex(columns, project.start);
-      const endIndex = this.getColumnIndex(columns, project.end);
-
-      if (startIndex === -1 || endIndex === -1) {
-        console.warn(
-          `プロジェクト ${project.id} の日付範囲がタイムライン範囲外です`
-        );
-        return;
-      }
-
-      box.style.gridColumn = `${startIndex + 1}`;
+      box.style.gridColumn = `${startIndex - start + 1}`;
       box.style.gridRow = `${project.lane}`;
-
-      gridDiv.appendChild(box);
+      this.gridDiv.appendChild(box);
     });
 
-    // 接続線を描画（リンクが存在するときのみ）
     if (this.links && this.links.length > 0) {
-      this.drawConnections(container);
+      this.drawConnections(this.container);
     }
   }
 
@@ -178,6 +297,17 @@ class TimelineGenerator {
       while (current <= end) {
         result.push(this.formatDate(current));
         current.setDate(current.getDate() + 1);
+      }
+      return result;
+    }
+
+    if (this.scale === "hour") {
+      current.setHours(current.getHours() - this.startHourPadding, 0, 0, 0);
+      end.setHours(end.getHours() + this.endHourPadding, 0, 0, 0);
+
+      while (current <= end) {
+        result.push(this.formatDate(current));
+        current.setHours(current.getHours() + 1);
       }
       return result;
     }
@@ -220,7 +350,11 @@ class TimelineGenerator {
     let spanCount = 0;
 
     columns.forEach((column) => {
-      const headerKey = this.scale === "day" ? column.substring(0, 7) : column.substring(0, 4);
+      const headerKey = this.scale === "day"
+        ? column.substring(0, 7)
+        : this.scale === "hour"
+          ? column.substring(0, 10)
+          : column.substring(0, 4);
       if (headerKey !== currentKey) {
         if (currentKey !== null) {
           headers.push({ label: currentKey, year: currentKey.substring(0, 4), span: spanCount });
@@ -248,6 +382,11 @@ class TimelineGenerator {
     if (!trimmed) {
       return new Date();
     }
+    const hourMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})$/);
+    if (hourMatch) {
+      const [, y, m, d, h, min] = hourMatch;
+      return new Date(Number(y), Number(m) - 1, Number(d), Number(h), Number(min), 0, 0);
+    }
     if (trimmed.includes("Q")) {
       const [yearText, quarterText] = trimmed.split("-Q");
       const year = Number(yearText);
@@ -265,6 +404,11 @@ class TimelineGenerator {
   formatDate(date) {
     const y = date.getFullYear();
     const m = (date.getMonth() + 1).toString().padStart(2, "0");
+    if (this.scale === "hour") {
+      const d = date.getDate().toString().padStart(2, "0");
+      const h = date.getHours().toString().padStart(2, "0");
+      return `${y}-${m}-${d} ${h}:00`;
+    }
     if (this.scale === "day") {
       const d = date.getDate().toString().padStart(2, "0");
       return `${y}-${m}-${d}`;
@@ -280,6 +424,9 @@ class TimelineGenerator {
   }
 
   getColumnLabel(column) {
+    if (this.scale === "hour") {
+      return `${column.substring(11, 13)}時`;
+    }
     if (this.scale === "day") {
       return column.substring(8);
     }
@@ -325,6 +472,8 @@ class TimelineGenerator {
     svg.style.height = gridDiv.scrollHeight + "px";
 
     svg.innerHTML = "";
+
+    const groupMap = this.buildConnectionGroups();
 
     this.links.forEach((link) => {
       const from = document.getElementById(`project-${link.from}`);
@@ -375,13 +524,70 @@ class TimelineGenerator {
         "d",
         `M ${x1} ${y1} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${x2} ${y2}`
       );
-      path.setAttribute("stroke", "gray");
+      const groupId = groupMap.get(String(link.from)) ?? groupMap.get(String(link.to)) ?? 0;
+      path.setAttribute("stroke", this.getConnectionColor(groupId));
       path.setAttribute("stroke-width", "2");
       path.setAttribute("fill", "none");
       svg.appendChild(path);
     });
 
     gridDiv.appendChild(svg);
+  }
+
+  buildConnectionGroups() {
+    if (!Array.isArray(this.links) || this.links.length === 0) {
+      return new Map();
+    }
+
+    const adjacency = new Map();
+    const ensureNode = (nodeId) => {
+      if (!adjacency.has(nodeId)) {
+        adjacency.set(nodeId, new Set());
+      }
+    };
+
+    this.links.forEach((link) => {
+      const from = String(link.from);
+      const to = String(link.to);
+      ensureNode(from);
+      ensureNode(to);
+      adjacency.get(from).add(to);
+      adjacency.get(to).add(from);
+    });
+
+    const visited = new Set();
+    const groupMap = new Map();
+    let groupId = 0;
+
+    adjacency.forEach((_, nodeId) => {
+      if (visited.has(nodeId)) {
+        return;
+      }
+      const queue = [nodeId];
+      visited.add(nodeId);
+      groupMap.set(nodeId, groupId);
+
+      while (queue.length > 0) {
+        const current = queue.shift();
+        const neighbors = adjacency.get(current) || [];
+        neighbors.forEach((neighbor) => {
+          if (!visited.has(neighbor)) {
+            visited.add(neighbor);
+            groupMap.set(neighbor, groupId);
+            queue.push(neighbor);
+          }
+        });
+      }
+
+      groupId += 1;
+    });
+
+    return groupMap;
+  }
+
+  getConnectionColor(groupId) {
+    const hue = (groupId * 137.508) % 360;
+    return `hsl(${hue} 70% 45%)`;
   }
 
   renderTodayIndicator(columns, container, gridDiv) {
@@ -418,10 +624,7 @@ class TimelineGenerator {
 
     const marker = document.createElement("div");
     marker.className = "timeline-today-marker";
-    const monthCell = document.getElementById("timeline-months")?.children?.[monthIndex];
-    const markerLeft = monthCell
-      ? monthCell.offsetLeft + monthCell.offsetWidth / 2
-      : monthIndex * this.columnWidth + this.columnWidth / 2;
+    const markerLeft = monthIndex * this.columnWidth + this.columnWidth / 2;
     marker.style.left = `${markerLeft}px`;
 
     const line = document.createElement("div");
