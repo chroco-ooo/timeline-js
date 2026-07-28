@@ -10,6 +10,9 @@
 - 年・月単位のグリッドに沿った正確なタイムライン表示
 - プロジェクトノードの開始時点をタイムライン上に自動配置
 - プロジェクト同士の接続（矢印線）描画機能
+- 横型グリッドと縦型カードレイアウトの切り替え
+- 縦型ではイベントを新しい順に表示し、接続線を描画しない
+- 縦型の長い説明を3行表示から全文へ展開可能
 - スクロール対応済み（スクロール外でも線が正しく描画）
 - HTML＋SCSS＋JavaScript のシンプル構成
 - カスタマイズしやすい
@@ -66,6 +69,7 @@ const timeline = new TimelineGenerator({
     startDate: "2011-01",
     endDate: "2015-12",
     scale: "month",
+    layout: "horizontal", // "horizontal" または "vertical"
     projects: [
         // end は範囲外チェックに使われるため、start と同じ月でもOK
         { id: "p1", name: "プロジェクトA", start: "2011-02", end: "2011-02", lane: 1, color: "#4fc3f7" },
@@ -91,6 +95,7 @@ timeline.render();
 | startDate      | 必須 | 開始年月 (`"YYYY-MM"` 形式)、日単位の場合は `"YYYY-MM-DD"`、年単位の場合は `"YYYY"`               |
 | endDate        | 必須 | 終了年月 (`"YYYY-MM"` 形式)、日単位の場合は `"YYYY-MM-DD"`、年単位の場合は `"YYYY"`               |
 | scale          | 任意 | `"day"`, `"month"`, `"quarter"`, `"year"`（デフォルトは"month"）                    |
+| layout         | 任意 | `"horizontal"` または `"vertical"`（デフォルトは `"horizontal"`）                  |
 | projects       | 必須 | プロジェクト情報配列（下記参照）                                                            |
 | links          | 任意 | プロジェクト間の接続線情報配列                                                             |
 | onProjectClick | 任意 | プロジェクトボックスがクリックされた時のコールバック                                                  |
@@ -99,6 +104,17 @@ timeline.render();
 | clickMode      | 任意 | `"event"` or `"link"`。`"link"`の場合は `url` を持つプロジェクトをアンカー表示（デフォルト: `"event"`） |
 | linkTarget     | 任意 | `clickMode: "link"` の場合の `target` 属性（デフォルト: `"_blank"`）                     |
 | linkRel        | 任意 | `clickMode: "link"` の場合の `rel` 属性（デフォルト: `"noopener"`）                      |
+
+描画後に表示方向を切り替える場合は `setLayout` を使います。
+
+```javascript
+timeline.setLayout("vertical");
+timeline.setLayout("horizontal");
+```
+
+`layout` を省略した場合は、従来との互換性を保つため横型で描画します。横型は `links` と `lane`
+を使って関係性を表示します。縦型は `projects` をイベント日時の新しい順に並べ、`links` と `lane`
+を描画に使用しません。
 
 ---
 
@@ -115,9 +131,15 @@ timeline.render();
   lane: 1,          // レーン番号（上から順番に）
   color: "#4fc3f7", // 任意：ボックスの色
   url: "https://example.com", // 任意：clickMode が "link" のときにリンク先として使用
-  backgroundImage: "https://example.com/icon.png" // 任意：アイコン画像
+  backgroundImage: "https://example.com/icon.png", // 任意：アイコン画像
+  title: "カードのタイトル", // 任意：縦型で表示
+  description: "カードの説明", // 任意：縦型で表示。3行を超える場合は展開可能
+  eventAt: "2011-02-15T10:30:00" // 任意：縦型の日付・時刻表示と並び順に使用
 }
 ```
+
+縦型の日付は `eventAt`、`start`、`end` の順で使用します。日時が同じプロジェクトは、
+`projects` に指定した元の順序を維持します。
 
 ### クリックイベントのコールバック
 
@@ -144,7 +166,7 @@ const timeline = new TimelineGenerator({
 
 ## 接続線情報（links）
 
-プロジェクト間の関連を示す矢印線を設定します。
+横型でプロジェクト間の関連を示す矢印線を設定します。縦型では `links` を描画しません。
 
 ```javascript
 {
@@ -159,8 +181,9 @@ const timeline = new TimelineGenerator({
 
 - **timeline.scss** を使う場合、必ずCSSにコンパイルしてから読み込んでください。
 - コンテナ要素（例：`#timeline-container`）は **`position: relative;`** を指定してください。
-- **年（50px）＋月（30px）**の固定ヘッダー高さを基準に線を描画しています（カスタマイズする場合はコード側も調整してください）。
-- プロジェクトの `start` / `end` がタイムライン範囲外の場合は警告を出して描画をスキップします。
+- 横型は年・月ヘッダーの高さを基準に接続線を描画します。
+- 横型ではプロジェクトの `start` / `end` が範囲外の場合、警告を出して描画をスキップします。
+- 縦型の説明展開ボタンはカードのクリック・外部リンクとは独立して動作します。
 
 ---
 

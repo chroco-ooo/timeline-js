@@ -7,6 +7,7 @@ class TimelineGenerator {
     this.startDate = options.startDate;
     this.endDate = options.endDate;
     this.scale = options.scale || "month";
+    this.layout = options.layout === "vertical" ? "vertical" : "horizontal";
     this.projects = options.projects || [];
     this.links = options.links || [];
     this.minLaneCount = Number.isFinite(options.minLaneCount) ? options.minLaneCount : 5;
@@ -61,9 +62,20 @@ class TimelineGenerator {
       return;
     }
 
-    const yearsDiv = document.getElementById("timeline-years");
-    const monthsDiv = document.getElementById("timeline-months");
-    const gridDiv = document.getElementById("timeline-grid");
+    this.detachVirtualScroll();
+    container.classList.toggle("timeline-container-vertical", this.layout === "vertical");
+    container.classList.toggle("timeline-container-horizontal", this.layout !== "vertical");
+
+    if (this.layout === "vertical") {
+      this.container = container;
+      this.renderVertical();
+      return;
+    }
+
+    this.ensureHorizontalStructure(container);
+    const yearsDiv = container.querySelector(".timeline-years");
+    const monthsDiv = container.querySelector(".timeline-months");
+    const gridDiv = container.querySelector(".timeline-grid");
 
     this.container = container;
     this.yearsDiv = yearsDiv;
@@ -78,14 +90,272 @@ class TimelineGenerator {
     this.laneCount = this.resolveLaneCount();
     this.isVirtualScrollEnabled = this.allColumns.length > this.virtualScrollThreshold;
 
-    this.detachVirtualScroll();
-
     if (this.isVirtualScrollEnabled) {
       this.setupVirtualScroll();
       return;
     }
 
     this.renderRange(0, this.allColumns.length);
+  }
+
+  setLayout(layout) {
+    const nextLayout = layout === "vertical" ? "vertical" : "horizontal";
+    if (this.layout === nextLayout && this.container) {
+      return;
+    }
+    this.layout = nextLayout;
+    this.render();
+  }
+
+  ensureHorizontalStructure(container) {
+    const hasRequiredSections = container.querySelector(".timeline-years")
+      && container.querySelector(".timeline-months")
+      && container.querySelector(".timeline-grid");
+    if (hasRequiredSections) {
+      return;
+    }
+
+    container.replaceChildren();
+    [
+      ["timeline-years", "timeline-section timeline-years"],
+      ["timeline-months", "timeline-section timeline-months"],
+      ["timeline-grid", "timeline-section timeline-grid"],
+    ].forEach(([id, className]) => {
+      const section = document.createElement("div");
+      section.id = id;
+      section.className = className;
+      container.appendChild(section);
+    });
+  }
+
+  renderVertical() {
+    this.container.replaceChildren();
+    this.container.style.width = "";
+
+    const list = document.createElement("div");
+    list.className = "timeline-vertical";
+    list.setAttribute("role", "list");
+
+    this.sortProjectsByDate().forEach((project, projectIndex) => {
+      const item = document.createElement("article");
+      item.className = "timeline-vertical-item";
+      item.setAttribute("role", "listitem");
+
+      const date = document.createElement("time");
+      date.className = "timeline-vertical-date";
+      if (project.eventAt) {
+        date.dateTime = project.eventAt;
+      }
+      const dateText = document.createElement("strong");
+      dateText.textContent = this.formatProjectDate(project);
+      date.appendChild(dateText);
+      const timeText = this.formatProjectTime(project);
+      if (timeText) {
+        const time = document.createElement("span");
+        time.textContent = timeText;
+        date.appendChild(time);
+      }
+
+      const marker = document.createElement("span");
+      marker.className = "timeline-vertical-marker";
+      marker.setAttribute("aria-hidden", "true");
+
+      const card = document.createElement("div");
+      card.className = "timeline-vertical-card";
+      card.dataset.projectId = project.id;
+
+      const isLinkMode = this.clickMode === "link" && project.url;
+      const action = document.createElement(isLinkMode ? "a" : "button");
+      action.className = "timeline-vertical-card-action";
+      if (isLinkMode) {
+        action.href = project.url;
+        action.target = this.linkTarget;
+        action.rel = this.linkRel;
+      } else {
+        action.type = "button";
+        if (this.onProjectClick) {
+          action.addEventListener("click", (event) => {
+            this.onProjectClick({ event, project, element: action });
+          });
+        }
+      }
+
+      const imageUrl = this.normalizeImageUrl(project.backgroundImage);
+      if (imageUrl) {
+        const image = document.createElement("img");
+        image.className = "timeline-vertical-image";
+        image.src = imageUrl;
+        image.alt = "";
+        image.loading = "lazy";
+        action.appendChild(image);
+      }
+
+      const body = document.createElement("div");
+      body.className = "timeline-vertical-body";
+      const heading = document.createElement("div");
+      heading.className = "timeline-vertical-heading";
+      this.appendProjectText(heading, "p", "timeline-vertical-site", project.name);
+      this.appendProjectText(
+        heading,
+        "h3",
+        "timeline-vertical-title",
+        project.title || project.name || "Untitled"
+      );
+      if (isLinkMode || this.onProjectClick) {
+        this.appendProjectText(
+          heading,
+          "span",
+          "timeline-vertical-link",
+          "View details →"
+        );
+      }
+      action.appendChild(heading);
+      card.appendChild(action);
+
+      const description = this.appendProjectText(
+        body,
+        "p",
+        "timeline-vertical-description",
+        project.description
+      );
+      if (description) {
+        const descriptionId = `${this.targetId}-description-${projectIndex}`
+          .replace(/[^a-zA-Z0-9_-]/g, "-");
+        description.id = descriptionId;
+
+        const descriptionToggle = document.createElement("button");
+        descriptionToggle.type = "button";
+        descriptionToggle.className = "timeline-vertical-description-toggle";
+        descriptionToggle.textContent = "Show more";
+        descriptionToggle.setAttribute("aria-controls", descriptionId);
+        descriptionToggle.setAttribute("aria-expanded", "false");
+        descriptionToggle.hidden = true;
+        descriptionToggle.addEventListener("click", () => {
+          const expanded = descriptionToggle.getAttribute("aria-expanded") === "true";
+          descriptionToggle.setAttribute("aria-expanded", expanded ? "false" : "true");
+          descriptionToggle.textContent = expanded ? "Show more" : "Show less";
+          description.classList.toggle("timeline-vertical-description-expanded", !expanded);
+        });
+        body.appendChild(descriptionToggle);
+      }
+
+      const footer = document.createElement("div");
+      footer.className = "timeline-vertical-footer";
+      this.appendProjectText(footer, "span", "", this.formatProjectDate(project));
+      body.appendChild(footer);
+      card.appendChild(body);
+      item.append(date, marker, card);
+      list.appendChild(item);
+    });
+
+    this.container.appendChild(list);
+    requestAnimationFrame(() => {
+      list.querySelectorAll(".timeline-vertical-description").forEach((description) => {
+        const toggle = description.nextElementSibling;
+        if (!toggle || !toggle.classList.contains("timeline-vertical-description-toggle")) {
+          return;
+        }
+        toggle.hidden = description.scrollHeight <= description.clientHeight;
+      });
+    });
+  }
+
+  appendProjectText(parent, tagName, className, value) {
+    const text = String(value || "").trim();
+    if (!text) {
+      return null;
+    }
+    const element = document.createElement(tagName);
+    element.className = className;
+    element.textContent = text;
+    parent.appendChild(element);
+    return element;
+  }
+
+  normalizeImageUrl(value) {
+    const raw = String(value || "").trim();
+    if (!raw) {
+      return "";
+    }
+    const cssUrlMatch = raw.match(/^url\((['"]?)(.*?)\1\)$/i);
+    const url = cssUrlMatch ? cssUrlMatch[2] : raw;
+    return /^(https?:\/\/|\/)/i.test(url) ? url : "";
+  }
+
+  getProjectDate(project) {
+    const raw = String(project.eventAt || project.start || project.end || "").trim();
+    const dateTimeMatch = raw.match(
+      /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/
+    );
+    if (dateTimeMatch) {
+      const [, year, month, day, hour = "0", minute = "0", second = "0"] = dateTimeMatch;
+      const date = new Date(
+        Number(year),
+        Number(month) - 1,
+        Number(day),
+        Number(hour),
+        Number(minute),
+        Number(second)
+      );
+      const isValid = date.getFullYear() === Number(year)
+        && date.getMonth() === Number(month) - 1
+        && date.getDate() === Number(day)
+        && date.getHours() === Number(hour)
+        && date.getMinutes() === Number(minute)
+        && date.getSeconds() === Number(second);
+      return isValid ? date : null;
+    }
+    const quarterMatch = raw.match(/^(\d{4})-Q([1-4])$/);
+    if (quarterMatch) {
+      return new Date(Number(quarterMatch[1]), (Number(quarterMatch[2]) - 1) * 3, 1);
+    }
+    const monthMatch = raw.match(/^(\d{4})-(\d{2})$/);
+    if (monthMatch) {
+      const date = new Date(Number(monthMatch[1]), Number(monthMatch[2]) - 1, 1);
+      return date.getMonth() === Number(monthMatch[2]) - 1 ? date : null;
+    }
+    const yearMatch = raw.match(/^(\d{4})$/);
+    return yearMatch ? new Date(Number(yearMatch[1]), 0, 1) : null;
+  }
+
+  sortProjectsByDate() {
+    return this.projects
+      .map((project, index) => ({ project, index }))
+      .sort((leftEntry, rightEntry) => {
+        const leftDate = this.getProjectDate(leftEntry.project);
+        const rightDate = this.getProjectDate(rightEntry.project);
+        if (leftDate && rightDate && leftDate.getTime() !== rightDate.getTime()) {
+          return rightDate.getTime() - leftDate.getTime();
+        }
+        if (leftDate && !rightDate) {
+          return -1;
+        }
+        if (!leftDate && rightDate) {
+          return 1;
+        }
+        return leftEntry.index - rightEntry.index;
+      })
+      .map(({ project }) => project);
+  }
+
+  formatProjectDate(project) {
+    const date = this.getProjectDate(project);
+    if (!date) {
+      return String(project.start || project.end || "");
+    }
+    return new Intl.DateTimeFormat(undefined, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(date);
+  }
+
+  formatProjectTime(project) {
+    const match = String(project.eventAt || "").match(/[T ](\d{2}):(\d{2})/);
+    if (!match || `${match[1]}:${match[2]}` === "00:00") {
+      return "";
+    }
+    return `${match[1]}:${match[2]}`;
   }
 
   setupVirtualScroll() {

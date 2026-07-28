@@ -3,44 +3,215 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Timeline Generator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Timeline Generator Demo</title>
     <link rel="stylesheet" href="./css/timeline.css">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 32px 20px 56px;
+            background: #f7faf9;
+            color: #262626;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        .demo {
+            width: min(100%, 1120px);
+            margin: 0 auto;
+        }
+
+        .demo h1 {
+            margin: 0;
+            font-size: clamp(24px, 4vw, 38px);
+        }
+
+        .demo-description {
+            max-width: 720px;
+            margin: 10px 0 24px;
+            color: #525252;
+            line-height: 1.7;
+        }
+
+        .demo-controls {
+            display: inline-flex;
+            gap: 4px;
+            margin-bottom: 16px;
+            padding: 4px;
+            border: 1px solid #d9e3e0;
+            border-radius: 12px;
+            background: #fff;
+        }
+
+        .demo-controls button {
+            min-height: 38px;
+            padding: 8px 16px;
+            border: 0;
+            border-radius: 8px;
+            background: transparent;
+            color: #525252;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .demo-controls button[aria-pressed="true"] {
+            background: #619989;
+            color: #fff;
+        }
+
+        .demo-controls button:focus-visible {
+            outline: 2px solid #619989;
+            outline-offset: 2px;
+        }
+
+        .demo-viewport {
+            overflow-x: auto;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 20px;
+            background: #fff;
+            box-shadow: 0 12px 36px rgba(38, 73, 65, 0.08);
+        }
+
+        .demo-feedback {
+            min-height: 24px;
+            margin: 12px 0 0;
+            color: #47786b;
+            font-size: 14px;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 24px 12px 40px;
+            }
+
+            .demo-controls {
+                display: flex;
+            }
+
+            .demo-controls button {
+                flex: 1;
+            }
+
+            .demo-viewport {
+                padding: 12px;
+            }
+        }
+    </style>
 </head>
 
 <body>
+<main class="demo">
+    <h1>Timeline Generator</h1>
+    <p class="demo-description">
+        同じプロジェクトデータを、関係性が分かる横型と、出来事を新しい順に読める縦型で表示します。
+        縦型ではプロジェクト間の接続線を描画しません。
+    </p>
 
-<div id="timeline-container">
-    <div class="timeline-section timeline-years" id="timeline-years"></div>
-    <div class="timeline-section timeline-months" id="timeline-months"></div>
-    <div class="timeline-section timeline-grid" id="timeline-grid"></div>
-</div>
+    <div class="demo-controls" role="group" aria-label="タイムラインのレイアウト">
+        <button type="button" data-layout="horizontal" aria-pressed="true">横型</button>
+        <button type="button" data-layout="vertical" aria-pressed="false">縦型</button>
+    </div>
+
+    <div class="demo-viewport timeline-scroll">
+        <div id="timeline-container">
+            <div class="timeline-section timeline-years" id="timeline-years"></div>
+            <div class="timeline-section timeline-months" id="timeline-months"></div>
+            <div class="timeline-section timeline-grid" id="timeline-grid"></div>
+        </div>
+    </div>
+    <p id="demo-feedback" class="demo-feedback" aria-live="polite"></p>
+</main>
 
 <script src="timeline.js"></script>
 <script>
+    const projects = [
+        {
+            id: "p1",
+            name: "サービス構想",
+            title: "最初のアイデアをまとめる",
+            start: "2024-02",
+            end: "2024-02",
+            eventAt: "2024-02-15 10:00",
+            lane: 1,
+            color: "#90c8ba",
+            description: "利用者が活動の流れとプロジェクト同士の関係を一つの画面で理解できるサービスを構想しました。"
+        },
+        {
+            id: "p2",
+            name: "プロトタイプ",
+            title: "横型タイムラインを公開",
+            start: "2025-04",
+            end: "2025-04",
+            eventAt: "2025-04-10 09:30",
+            lane: 2,
+            color: "#e4a0a5",
+            description: "イベント間のつながりを矢印で確認できる横型タイムラインを実装しました。"
+        },
+        {
+            id: "p3",
+            name: "表示機能",
+            title: "縦型タイムラインを追加",
+            start: "2026-07",
+            end: "2026-07",
+            eventAt: "2026-07-28 14:00",
+            lane: 1,
+            color: "#64a294",
+            description: "出来事を新しい順に読み進められる縦型表示を追加しました。縦型ではイベント同士を接続せず、一本の時間軸に沿ってカードを並べます。この説明は三行を超えた場合に、全文表示と省略表示を切り替えられます。"
+        },
+        {
+            id: "p4",
+            name: "同時公開",
+            title: "同じ日時のイベント",
+            start: "2026-07",
+            end: "2026-07",
+            eventAt: "2026-07-28 14:00",
+            lane: 3,
+            color: "#d8b26e",
+            description: "同じ日時の場合は、入力したプロジェクトの順序を維持します。"
+        }
+    ];
+
     const timeline = new TimelineGenerator({
         targetId: "timeline-container",
-        startDate: "2011-01",
-        endDate: "2013-12",
+        startDate: "2024-01",
+        endDate: "2026-12",
         scale: "month",
-        projects: [
-            { id: "p1", name: "プロジェクトA", start: "2011-02", end: "2011-03", lane: 1, color: "#4fc3f7" },
-            { id: "p2", name: "プロジェクトB", start: "2012-04", end: "2012-05", lane: 2, color: "#81c784" },
-            { id: "p3", name: "プロジェクトC", start: "2012-08", end: "2012-09", lane: 1, color: "#ffb74d" },
-            { id: "p4", name: "プロジェクトD", start: "2013-05", end: "2013-04", lane: 3, color: "#ba68c8" },
-            { id: "p5", name: "プロジェクトE", start: "2011-01", end: "2011-02", lane: 2, color: "#ba68c8" }
-        ],
+        projects,
         links: [
             { from: "p1", to: "p2" },
             { from: "p2", to: "p3" },
-            { from: "p3", to: "p4" },
-            { from: "p1", to: "p3" },
-            { from: "p5", to: "p1" },
-             // 複数分岐も可能
-        ]
+            { from: "p2", to: "p4" }
+        ],
+        onProjectClick: ({ project }) => {
+            document.getElementById("demo-feedback").textContent =
+                `選択したイベント: ${project.title || project.name}`;
+        }
     });
     timeline.render();
-</script>
 
+    const layoutButtons = document.querySelectorAll("[data-layout]");
+    layoutButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            const layout = button.dataset.layout;
+            timeline.setLayout(layout);
+            layoutButtons.forEach((candidate) => {
+                candidate.setAttribute(
+                    "aria-pressed",
+                    candidate.dataset.layout === layout ? "true" : "false"
+                );
+            });
+            document.querySelector(".demo-viewport").style.overflowX =
+                layout === "horizontal" ? "auto" : "visible";
+            document.getElementById("demo-feedback").textContent =
+                `${layout === "horizontal" ? "横型" : "縦型"}へ切り替えました。`;
+        });
+    });
+</script>
 </body>
 
 </html>
