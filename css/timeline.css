@@ -199,13 +199,6 @@
     font-size: 11px;
 }
 
-.timeline-vertical-link {
-    display: inline-block;
-    margin-top: 9px;
-    color: var(--timeline-accent);
-    font-weight: 700;
-}
-
 @media (max-width: 640px) {
     .timeline-vertical {
         padding-left: 2px;

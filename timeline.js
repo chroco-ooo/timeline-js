@@ -201,14 +201,6 @@ class TimelineGenerator {
         "timeline-vertical-title",
         project.title || project.name || "Untitled"
       );
-      if (isLinkMode || this.onProjectClick) {
-        this.appendProjectText(
-          heading,
-          "span",
-          "timeline-vertical-link",
-          "View details →"
-        );
-      }
       action.appendChild(heading);
       card.appendChild(action);
 
