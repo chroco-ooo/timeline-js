@@ -18,7 +18,7 @@
 
 ## デモイメージ
 
-![Timeline Generator Demo](thumbnail.png)  
+![Timeline Generator Demo](thumbnail.png)
 
 ---
 
@@ -85,20 +85,20 @@ timeline.render();
 
 ## オプション一覧
 
-| オプション | 必須 | 説明 |
-|:---|:---|:---|
-| targetId | 必須 | タイムラインを描画する対象divのID |
-| startDate | 必須 | 開始年月 (`"YYYY-MM"` 形式)、日単位の場合は `"YYYY-MM-DD"`、年単位の場合は `"YYYY"` |
-| endDate | 必須 | 終了年月 (`"YYYY-MM"` 形式)、日単位の場合は `"YYYY-MM-DD"`、年単位の場合は `"YYYY"` |
-| scale | 任意 | `"day"`, `"month"`, `"quarter"`, `"year"`（デフォルトは"month"） |
-| projects | 必須 | プロジェクト情報配列（下記参照） |
-| links | 任意 | プロジェクト間の接続線情報配列 |
-| onProjectClick | 任意 | プロジェクトボックスがクリックされた時のコールバック |
-| minLaneCount | 任意 | レーン数の最小値（デフォルト: 5） |
-| maxLaneCount | 任意 | レーン数の最大値（デフォルト: 10） |
-| clickMode | 任意 | `"event"` or `"link"`。`"link"`の場合は `url` を持つプロジェクトをアンカー表示（デフォルト: `"event"`） |
-| linkTarget | 任意 | `clickMode: "link"` の場合の `target` 属性（デフォルト: `"_blank"`） |
-| linkRel | 任意 | `clickMode: "link"` の場合の `rel` 属性（デフォルト: `"noopener"`） |
+| オプション          | 必須 | 説明                                                                          |
+|:---------------|:---|:----------------------------------------------------------------------------|
+| targetId       | 必須 | タイムラインを描画する対象divのID                                                         |
+| startDate      | 必須 | 開始年月 (`"YYYY-MM"` 形式)、日単位の場合は `"YYYY-MM-DD"`、年単位の場合は `"YYYY"`               |
+| endDate        | 必須 | 終了年月 (`"YYYY-MM"` 形式)、日単位の場合は `"YYYY-MM-DD"`、年単位の場合は `"YYYY"`               |
+| scale          | 任意 | `"day"`, `"month"`, `"quarter"`, `"year"`（デフォルトは"month"）                    |
+| projects       | 必須 | プロジェクト情報配列（下記参照）                                                            |
+| links          | 任意 | プロジェクト間の接続線情報配列                                                             |
+| onProjectClick | 任意 | プロジェクトボックスがクリックされた時のコールバック                                                  |
+| minLaneCount   | 任意 | レーン数の最小値（デフォルト: 5）                                                          |
+| maxLaneCount   | 任意 | レーン数の最大値（デフォルト: 10）                                                         |
+| clickMode      | 任意 | `"event"` or `"link"`。`"link"`の場合は `url` を持つプロジェクトをアンカー表示（デフォルト: `"event"`） |
+| linkTarget     | 任意 | `clickMode: "link"` の場合の `target` 属性（デフォルト: `"_blank"`）                     |
+| linkRel        | 任意 | `clickMode: "link"` の場合の `rel` 属性（デフォルト: `"noopener"`）                      |
 
 ---
 
