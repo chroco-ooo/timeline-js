@@ -142,17 +142,8 @@
     display: block;
     width: 100%;
     padding: 0;
-    border: 0;
-    background: transparent;
     color: inherit;
-    font: inherit;
     text-align: left;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-.timeline-vertical-card-action:focus-visible {
-    outline: 0;
 }
 
 .timeline-vertical-image {
@@ -200,16 +191,12 @@
 }
 
 .timeline-vertical-description {
-    display: -webkit-box;
-    overflow: hidden;
     position: relative;
     margin: 22px 0 0;
     padding: 0 18px;
     color: #343837;
     font-size: 14px;
     line-height: 2;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
 }
 
 .timeline-vertical-description::before,
@@ -233,39 +220,6 @@
     right: -5px;
     bottom: -28px;
     content: "”";
-}
-
-.timeline-vertical-description.timeline-vertical-description-expanded {
-    display: block;
-    overflow: visible;
-    -webkit-line-clamp: unset;
-}
-
-.timeline-vertical-description-toggle {
-    display: inline-flex;
-    margin: 8px 0 0;
-    padding: 2px 0;
-    border: 0;
-    background: transparent;
-    color: var(--timeline-axis);
-    font: inherit;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.timeline-vertical-description-toggle[hidden] {
-    display: none;
-}
-
-.timeline-vertical-description-toggle:hover {
-    text-decoration: underline;
-}
-
-.timeline-vertical-description-toggle:focus-visible {
-    outline: 2px solid var(--timeline-axis);
-    outline-offset: 3px;
-    border-radius: 2px;
 }
 
 .timeline-vertical-footer {
@@ -292,9 +246,22 @@
     padding: 5px 13px;
     border: 1px solid var(--timeline-event-accent);
     border-radius: 999px;
+    background: #fff;
     color: #47786b;
+    font: inherit;
     font-weight: 700;
     letter-spacing: .03em;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.timeline-vertical-footer-action:hover {
+    background: color-mix(in srgb, var(--timeline-event-accent) 9%, white);
+}
+
+.timeline-vertical-footer-action:focus-visible {
+    outline: 2px solid var(--timeline-event-accent);
+    outline-offset: 3px;
 }
 
 @media (max-width: 640px) {

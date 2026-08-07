@@ -180,20 +180,8 @@ class TimelineGenerator {
       card.dataset.projectId = project.id;
 
       const isLinkMode = this.clickMode === "link" && project.url;
-      const action = document.createElement(isLinkMode ? "a" : "button");
+      const action = document.createElement("div");
       action.className = "timeline-vertical-card-action";
-      if (isLinkMode) {
-        action.href = project.url;
-        action.target = this.linkTarget;
-        action.rel = this.linkRel;
-      } else {
-        action.type = "button";
-        if (this.onProjectClick) {
-          action.addEventListener("click", (event) => {
-            this.onProjectClick({ event, project, element: action });
-          });
-        }
-      }
 
       const imageUrl = this.normalizeImageUrl(project.backgroundImage);
       if (imageUrl) {
@@ -227,40 +215,34 @@ class TimelineGenerator {
       action.appendChild(heading);
       card.appendChild(action);
 
-      const description = this.appendProjectText(
+      this.appendProjectText(
         body,
         "p",
         "timeline-vertical-description",
         project.description
       );
-      if (description) {
-        const descriptionId = `${this.targetId}-description-${projectIndex}`
-          .replace(/[^a-zA-Z0-9_-]/g, "-");
-        description.id = descriptionId;
-
-        const descriptionToggle = document.createElement("button");
-        descriptionToggle.type = "button";
-        descriptionToggle.className = "timeline-vertical-description-toggle";
-        descriptionToggle.textContent = "続きを読む";
-        descriptionToggle.setAttribute("aria-controls", descriptionId);
-        descriptionToggle.setAttribute("aria-expanded", "false");
-        descriptionToggle.hidden = true;
-        descriptionToggle.addEventListener("click", () => {
-          const expanded = descriptionToggle.getAttribute("aria-expanded") === "true";
-          descriptionToggle.setAttribute("aria-expanded", expanded ? "false" : "true");
-          descriptionToggle.textContent = expanded ? "続きを読む" : "閉じる";
-          description.classList.toggle("timeline-vertical-description-expanded", !expanded);
-        });
-        body.appendChild(descriptionToggle);
-      }
 
       const footer = document.createElement("div");
       footer.className = "timeline-vertical-footer";
       this.appendProjectText(footer, "span", "timeline-vertical-footer-name", project.name);
-      const footerAction = document.createElement("span");
-      footerAction.className = "timeline-vertical-footer-action";
-      footerAction.textContent = isLinkMode ? "リンクを開く →" : "詳しく見る →";
-      footer.appendChild(footerAction);
+      if (isLinkMode) {
+        const footerAction = document.createElement("a");
+        footerAction.className = "timeline-vertical-footer-action";
+        footerAction.href = project.url;
+        footerAction.target = this.linkTarget;
+        footerAction.rel = this.linkRel;
+        footerAction.textContent = "詳しく見る →";
+        footer.appendChild(footerAction);
+      } else if (this.onProjectClick) {
+        const footerAction = document.createElement("button");
+        footerAction.type = "button";
+        footerAction.className = "timeline-vertical-footer-action";
+        footerAction.textContent = "詳しく見る →";
+        footerAction.addEventListener("click", (event) => {
+          this.onProjectClick({ event, project, element: footerAction });
+        });
+        footer.appendChild(footerAction);
+      }
       body.appendChild(footer);
       card.appendChild(body);
       item.append(date, marker, card);
@@ -268,15 +250,6 @@ class TimelineGenerator {
     });
 
     this.container.appendChild(list);
-    requestAnimationFrame(() => {
-      list.querySelectorAll(".timeline-vertical-description").forEach((description) => {
-        const toggle = description.nextElementSibling;
-        if (!toggle || !toggle.classList.contains("timeline-vertical-description-toggle")) {
-          return;
-        }
-        toggle.hidden = description.scrollHeight <= description.clientHeight;
-      });
-    });
   }
 
   getProjectYear(project) {
