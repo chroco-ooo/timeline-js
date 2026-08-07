@@ -136,10 +136,25 @@ class TimelineGenerator {
     list.className = "timeline-vertical";
     list.setAttribute("role", "list");
 
+    let previousYear = null;
     this.sortProjectsByDate().forEach((project, projectIndex) => {
+      const projectYear = this.getProjectYear(project);
+      if (projectYear && projectYear !== previousYear) {
+        const chapter = document.createElement("div");
+        chapter.className = "timeline-vertical-chapter";
+        chapter.setAttribute("aria-label", `${projectYear}年`);
+        chapter.innerHTML = `<span>${projectYear}</span>`;
+        list.appendChild(chapter);
+        previousYear = projectYear;
+      }
+
       const item = document.createElement("article");
       item.className = "timeline-vertical-item";
+      item.classList.add(projectIndex % 2 === 0 ? "timeline-vertical-item-right" : "timeline-vertical-item-left");
       item.setAttribute("role", "listitem");
+      if (project.color) {
+        item.style.setProperty("--timeline-event-accent", project.color);
+      }
 
       const date = document.createElement("time");
       date.className = "timeline-vertical-date";
@@ -218,14 +233,14 @@ class TimelineGenerator {
         const descriptionToggle = document.createElement("button");
         descriptionToggle.type = "button";
         descriptionToggle.className = "timeline-vertical-description-toggle";
-        descriptionToggle.textContent = "Show more";
+        descriptionToggle.textContent = "続きを読む";
         descriptionToggle.setAttribute("aria-controls", descriptionId);
         descriptionToggle.setAttribute("aria-expanded", "false");
         descriptionToggle.hidden = true;
         descriptionToggle.addEventListener("click", () => {
           const expanded = descriptionToggle.getAttribute("aria-expanded") === "true";
           descriptionToggle.setAttribute("aria-expanded", expanded ? "false" : "true");
-          descriptionToggle.textContent = expanded ? "Show more" : "Show less";
+          descriptionToggle.textContent = expanded ? "続きを読む" : "閉じる";
           description.classList.toggle("timeline-vertical-description-expanded", !expanded);
         });
         body.appendChild(descriptionToggle);
@@ -250,6 +265,12 @@ class TimelineGenerator {
         toggle.hidden = description.scrollHeight <= description.clientHeight;
       });
     });
+  }
+
+  getProjectYear(project) {
+    const value = String(project.eventAt || project.start || project.end || "").trim();
+    const match = value.match(/^(\d{4})/);
+    return match ? match[1] : "";
   }
 
   appendProjectText(parent, tagName, className, value) {
