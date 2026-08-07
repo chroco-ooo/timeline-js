@@ -209,7 +209,15 @@ class TimelineGenerator {
       body.className = "timeline-vertical-body";
       const heading = document.createElement("div");
       heading.className = "timeline-vertical-heading";
-      this.appendProjectText(heading, "p", "timeline-vertical-site", project.name);
+      const cardDate = document.createElement("p");
+      cardDate.className = "timeline-vertical-card-date";
+      const cardDateText = document.createElement("span");
+      cardDateText.textContent = this.formatProjectDate(project);
+      const cardDateArrow = document.createElement("span");
+      cardDateArrow.className = "timeline-vertical-card-date-arrow";
+      cardDateArrow.setAttribute("aria-hidden", "true");
+      cardDate.append(cardDateText, cardDateArrow);
+      heading.appendChild(cardDate);
       this.appendProjectText(
         heading,
         "h3",
@@ -248,7 +256,11 @@ class TimelineGenerator {
 
       const footer = document.createElement("div");
       footer.className = "timeline-vertical-footer";
-      this.appendProjectText(footer, "span", "", this.formatProjectDate(project));
+      this.appendProjectText(footer, "span", "timeline-vertical-footer-name", project.name);
+      const footerAction = document.createElement("span");
+      footerAction.className = "timeline-vertical-footer-action";
+      footerAction.textContent = isLinkMode ? "リンクを開く →" : "詳しく見る →";
+      footer.appendChild(footerAction);
       body.appendChild(footer);
       card.appendChild(body);
       item.append(date, marker, card);
