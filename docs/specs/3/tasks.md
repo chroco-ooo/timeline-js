@@ -5,7 +5,7 @@
 - 対象Issue: [#3 タイムラインのデザイン向上](https://github.com/chroco-ooo/timeline-js/issues/3)
 - 要件: [`requirements.md`](requirements.md)
 - 設計: [`design.md`](design.md)
-- テスト計画: `test-plan.md`（Task 3で作成）
+- テスト計画: [`test-plan.md`](test-plan.md)
 - 本書は調査、仕様確定、実装、テスト、文書同期をレビュー可能な差分へ分け、依存順に並べる。
 - カテゴリー、milestone、基準日時の外部指定は本Issueに含めない。
 - DB、バックエンド、HTTP API、依存関係、ビルド工程、デプロイ設定は変更しない。
@@ -18,6 +18,22 @@
 - `timeline.js` と `css/timeline.css` の対応が必要な変更は、片方だけを公開可能な完成状態としない。
 - 各実装タスク後に最低限 `node --check timeline.js` を実行する。
 - 自動テスト基盤や新しい依存関係は追加しない。
+
+## 進捗
+
+| Task | 状態 | 備考 |
+|---|---|---|
+| Task 1 | 完了 | 現行DOM、class、公開API、before状態を確認 |
+| Task 2 | 完了 | 推奨案をRequirementsとDesignへ反映 |
+| Task 3 | 完了 | `test-plan.md`を作成 |
+| Task 4 | 完了 | NOWの範囲判定、時系列挿入、ARIAを実装 |
+| Task 5 | 完了 | contentと画像ありmodifierを追加 |
+| Task 6 | 完了 | 年、実線軸、上部サムネイルcard、本文、レスポンシブを実装 |
+| Task 7 | 完了 | NOWとTodayの共通トークンを実装 |
+| Task 8 | 完了 | デモデータと画面説明を更新 |
+| Task 9 | 一部完了 | 構文、Chrome相当のローカル確認、1440px・640px・320pxを実施。全対象ブラウザ、linkモード、仮想スクロール、before / after保存は未実施 |
+| Task 10 | 一部完了 | READMEと仕様文書を同期。`thumbnail.png`は未更新 |
+| Task 11 | 一部完了 | Issue仕様を同期。全手動テスト完了後の最終チェックは未実施 |
 
 ## Task 1: 現行実装と互換性境界を調査する
 
@@ -51,7 +67,7 @@
 
 - [ ] 既存class、DOM階層、公開APIの互換性基準が記録されている。
 - [ ] before画像のブラウザ、viewport、撮影条件が記録されている。
-- [ ] Designの未決事項を判断する材料が揃っている。
+- [ ] Designの仕様決定に必要な材料が揃っている。
 
 ### 確認コマンド
 
@@ -61,7 +77,7 @@ rg -n "constructor|render|setLayout|Project|options" timeline.js docs/api-spec.m
 python -m http.server 8000
 ```
 
-## Task 2: Design未決事項と受け入れ基準を確定する
+## Task 2: Design仕様と受け入れ基準を確定する
 
 ### 責務
 
@@ -92,14 +108,14 @@ python -m http.server 8000
 
 ### 完了条件
 
-- [ ] Designの実装前に必要な「要承認」がすべて解決されている。
+- [ ] Designの実装基準がすべて確定している。
 - [ ] 寸法、色、breakpoint、DOM、NOW配置が実装者の追加判断なしに実装できる。
 - [ ] Requirementsの受け入れ条件を客観的に判定できる。
 
 ### 確認コマンド
 
 ```powershell
-rg -n "要承認|未決|モック承認後|判断を保留" docs/specs/3/requirements.md docs/specs/3/design.md
+rg -n "確定事項|確定した実装基準|WCAG 2.2 AA|641px" docs/specs/3/requirements.md docs/specs/3/design.md
 git diff --check
 ```
 
@@ -183,7 +199,7 @@ rg -n "timeline-vertical-now|new Date" timeline.js
 
 ### 責務
 
-PC横長カードを成立させるための最小限のDOM変更を行う。視覚デザインは含めない。
+上部サムネイルカードを成立させるための最小限のDOM変更を行う。視覚デザインは含めない。
 
 ### 対象ファイル
 
@@ -196,7 +212,7 @@ PC横長カードを成立させるための最小限のDOM変更を行う。視
 
 ### 作業
 
-- [ ] 画像と本文をGrid配置できる構造または補助classを追加する。
+- [ ] 画像と本文を縦積みできる構造または補助classを追加する。
 - [ ] 既存classを削除・改名せず維持する。
 - [ ] 画像なしeventに空の画像領域を生成しない。
 - [ ] 詳細button / linkとコールバックの発火範囲を維持する。
@@ -236,7 +252,7 @@ R1、R2、R6と付随する縦型デザイン調整をCSSへ実装する。
 - [ ] 年区切りを大きな年表示と細い横線へ変更する。
 - [ ] 縦軸を低彩度の1〜2px実線へ変更する。
 - [ ] event固有色をmarkerやリンク等の小面積に限定する。
-- [ ] PC画像付きカードを確定比率の横長Gridにする。
+- [ ] 画像付きカードの上部へサムネイルを全幅表示する。
 - [ ] 画像なしカードの本文を全幅にする。
 - [ ] 画像へ確定済みの`object-fit`、比率、高さ制約を適用する。
 - [ ] 影、枠線、角丸、hover移動、引用符装飾を整理する。
@@ -402,7 +418,7 @@ git diff --check
 
 ### 作業
 
-- [ ] READMEへ年区切り、実線軸、NOW、PC横長カード、モバイル表示を反映する。
+- [ ] READMEへ年区切り、実線軸、NOW、上部サムネイルカード、モバイル表示を反映する。
 - [ ] API仕様へ公開API・データ形式に変更がないことを反映する。
 - [ ] 画面仕様へNOWの条件、年区切り、レスポンシブ、状態別表示を追加する。
 - [ ] テスト方針へNOW、画像、境界幅、before / after確認を追加する。
@@ -457,24 +473,25 @@ Issue単位のRequirements、Design、test-plan、tasksを最終結果へ同期�
 ### 確認コマンド
 
 ```powershell
-rg -n "未決|要承認|モック承認後|判断を保留" docs/specs/3
+rg -n "確定事項|確定した実装基準|完了条件" docs/specs/3
 node --check timeline.js
 git diff --check
 ```
 
-## 未決事項・ブロッカー
+## 確定した実装前提
 
-以下はTask 2で解決するまで、Task 4以降の実装を開始しない。
+- [x] before / afterの撮影条件とデザイントークン初期値を確定した。
+- [x] NOWは同時刻event群の直後へ置く。
+- [x] NOWのためだけの年chapterは生成しない。
+- [x] 全画面幅で画像と本文を縦積みにし、画像4:3、`object-fit: cover`とする。
+- [x] 長いタイトルと説明は折り返して全文表示する。
+- [x] 既存class名を維持し、補助classを追加する。見た目とDOM直接子関係の完全互換は保証しない。
+- [x] 新デザインを既定にし、旧デザイン切り替えは追加しない。
+- [x] Chrome、Edge、Firefox、Safariの最新2メジャーバージョンを確認対象とする。
+- [x] WCAG 2.2 AAを目標とし、NOWは `role="separator"`、`aria-label="現在"` とする。
+- [x] `thumbnail.png`は受け入れ確認後に所定条件で更新する。
 
-- [ ] 完成モック、確定配色、寸法、before / after比較基準
-- [ ] NOWと同時刻eventの前後関係
-- [ ] NOWの年にeventがない場合のchapter表示
-- [ ] PCカードのbreakpoint、画像比率、高さ制約
-- [ ] 長いタイトルと説明の表示方針
-- [ ] DOM階層と外部CSS上書きの互換性保証範囲
-- [ ] 新デザインを既定にするか、旧デザイン切り替えを設けるか
-- [ ] 対応ブラウザ、確認端末、アクセシビリティ基準、NOWの読み上げ文言
-- [ ] `thumbnail.png`の更新要否と撮影条件
+Task 2とTask 3の文書成果物は作成済みだが、Taskの完了チェックはレビュー承認後に更新する。
 
 ## 対象外・後続Issue候補
 

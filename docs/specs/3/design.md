@@ -5,8 +5,8 @@
 - 対象Issue: [#3 タイムラインのデザイン向上](https://github.com/chroco-ooo/timeline-js/issues/3)
 - 要件: [`requirements.md`](requirements.md)
 - 本書は実装前の推奨設計を示す。本Issueでは、既存ライブラリの組み込み先へ影響を与えないため、コンストラクターオプションと `projects` / `links` のパラメータを追加・変更しない。
-- 未決事項に「要承認」と記した項目は、実装タスクへ移る前に人間が決定する。
-- 寸法・色の最終値と完成イメージは、合意済みモックまたはbefore / after画像を基準にする。
+- 本書に記載した値と配置ルールを実装基準とする。
+- 完成イメージは、同一データ・同一viewportで撮影したbefore / after画像を基準にする。
 
 ## 現在の実装上の前提
 
@@ -74,7 +74,7 @@ sticky表示は採用しない。年の把握には有効だが、狭い画面�
 
 ### カードと画像
 
-PCで横長カードを成立させるため、既存classを残して `.timeline-vertical-content` を追加する案を推奨する。
+サムネイルをカード上部へ全幅表示するため、既存classを残して `.timeline-vertical-content` を追加する。
 
 ```text
 .timeline-vertical-card
@@ -84,19 +84,20 @@ PCで横長カードを成立させるため、既存classを残して `.timelin
     └── .timeline-vertical-body
 ```
 
-現状の `.timeline-vertical-card-action` は見出しを囲む非操作の `div` であり、名称と役割が一致していない。ただし互換性のため削除・改名せず、`.timeline-vertical-content` の内部で既存classを維持するか、既存階層を保持したままGrid配置する。実装前に外部CSS互換性の保証範囲を決定する。
+現状の `.timeline-vertical-card-action` は見出しを囲む非操作の `div` であり、名称と役割が一致していない。ただし互換性のため削除・改名せず、`.timeline-vertical-content` の内部で既存classを維持する。
 
-推奨CSS:
+CSS:
 
-- 画像ありPC: cardをGridにし、画像約35%、content約65%。
+- 画像あり: card上部に画像を全幅表示し、その下にcontentを配置する。
 - 画像なしPC: contentを全幅にする。
 - 画像は `object-fit: cover`、固定aspect-ratioまたは高さ上限を用いる。
-- 640px以下: 1列へ戻し、画像、contentの順に縦積みする。
 - カードの影は削除または極小、枠線は1pxの低コントラスト、角丸は現状より小さくする。
 - hoverは位置移動を原則なくし、境界線または背景色の小さな変化にする。
 - `:focus-within` と `.timeline-vertical-footer-action:focus-visible` は維持する。
 
-画像比率、固定高、ブレークポイントはモック承認後に確定する。
+画像ありcardは画面幅にかかわらず画像、contentの順に縦積みする。画像領域は4:3を基本に `object-fit: cover` を使用する。画像なしcardはcontentを全幅にする。
+
+長いタイトルと説明は省略せず、折り返して全文表示する。JavaScriptによる省略・展開機能は追加しない。
 
 ### 説明とfooter
 
@@ -117,11 +118,11 @@ PCで横長カードを成立させるため、既存classを残して `.timelin
 2. `startDate` と `endDate` を現在の `scale` に従って範囲境界へ正規化する。
 3. 現在日時が閉区間内の場合だけNOWを描画する。
 4. 縦型eventを現在と比較し、新しい順の中で未来側と過去側の間へNOWを挿入する。
-5. 同時刻eventがある場合は、そのevent群を入力順のまま先に表示し、直後へNOWを置く案を推奨する。
+5. 同時刻eventがある場合は、そのevent群を入力順のまま先に表示し、直後へNOWを置く。
 
 範囲終端はscaleの単位全体を含む必要がある。例えば `endDate: "2026-08"` は2026年8月末までを範囲内と扱う。既存の横型列生成用paddingはNOWの表示範囲判定へ流用しない。
 
-同時刻でeventの前後どちらへ置くかは要承認とする。
+同時刻event群をNOWより先に置くことで、既存の入力順を維持し、event群をNOWで分断しない。
 
 ### DOM
 
@@ -133,15 +134,15 @@ NOWをeventカードとして扱わず、縦型list内の区切り要素とし�
 - `.timeline-vertical-now-label`
 - `.timeline-vertical-now-line`
 
-NOWは操作要素ではなく、視覚的な補助情報とする。スクリーンリーダーへ現在位置を伝える場合は、重複読み上げを避けた短いテキストまたは `aria-label` を付与する。具体文言は要承認とする。
+NOWは操作要素ではなく、視覚的な補助情報とする。`role="separator"` と `aria-label="現在"` を付与し、重複する可視ラベルは読み上げ対象から除外する。
 
-NOWの年にeventがなくても、新しい年chapterを自動生成するかは要承認とする。推奨は、eventの年chapter構造を変えず、NOWだけを正しい時系列位置へ置く方式である。
+NOWの年にeventがなくても新しい年chapterは生成しない。eventの年chapter構造を変えず、NOWだけを正しい時系列位置へ置く。
 
 ### 横型Todayとの統一
 
 - 既存の `.timeline-today-marker`、`.timeline-today-line`、`.timeline-today-badge` は維持する。
 - 縦型NOWと横型Todayで、アクセント色、ラベル文字サイズ、線の太さをCSS変数から共有する。
-- ラベル文言をNOWへ統一するか、既存Todayを維持するかは要承認とする。文言変更は画面仕様に反映する。
+- 横型は既存の「今日」、縦型は「NOW」を維持する。
 
 ## CSS設計
 
@@ -162,7 +163,20 @@ NOWの年にeventがなくても、新しい年chapterを自動生成するか�
 --timeline-focus
 ```
 
-具体的な色値はモック承認後に決定する。既存の `--timeline-event-accent` はevent固有色として維持し、広い面の背景には用いない。
+初期値は次のとおりとする。実装後のコントラスト確認でWCAG 2.2 AAを満たさない場合は、意味を変えない範囲で調整する。既存の `--timeline-event-accent` はevent固有色として維持し、広い面の背景には用いない。
+
+```css
+--timeline-bg: #f8fafc;
+--timeline-surface: #ffffff;
+--timeline-text: #172033;
+--timeline-text-muted: #64748b;
+--timeline-border: #dbe3ec;
+--timeline-axis: #a8b3c2;
+--timeline-accent: #2563eb;
+--timeline-focus: #1d4ed8;
+```
+
+時間軸は `1px solid var(--timeline-axis)`、card枠は `1px solid var(--timeline-border)`、card角丸は6pxを基本とする。通常時の影とhover時の位置移動は使用しない。focusは2px以上のoutlineで表示する。
 
 ### レスポンシブ
 
@@ -176,7 +190,7 @@ NOWの年にeventがなくても、新しい年chapterを自動生成するか�
 - 既存classは削除・改名しない。
 - modifierと構造補助classだけを追加する。
 - 既存classの見た目は変更されるため、外部サイトのCSS上書きとの完全互換は保証できない。
-- DOM階層変更を許容する範囲は要承認とする。完全な階層互換が必要なら、横長カードは既存要素をCSS Gridの直接子として配置する代替案を採用する。
+- cardには `.timeline-vertical-content` と、画像ありを示す `.timeline-vertical-card-has-image` を追加できる。既存classは削除・改名しない。既存class名は互換対象とするが、見た目とDOM直接子関係の完全互換は保証しない。
 
 ## 代替案
 
@@ -193,7 +207,7 @@ NOWの年にeventがなくても、新しい年chapterを自動生成するか�
 - NOWを含むJavaScript側の表示改善を満たさない。
 - Issue #3を分割して追跡する必要がある。
 
-未決事項が解消できない場合の最小公開単位として有効である。
+設計確定前の縮小案として検討したが、NOWを含む現行要件を満たさないため採用しない。
 
 ### B. `project.type` にカテゴリーとmilestoneを統合する
 
@@ -235,7 +249,7 @@ NOWの年にeventがなくても、新しい年chapterを自動生成するか�
 - 旧デザインの保守期限が必要になる。
 - 単一のミニマルなデザインへ整理する目的が弱まる。
 
-外部利用状況が確認できない現時点では判断を保留する。互換性保証が必要と確認された場合だけ採用候補とする。
+本Issueでは採用しない。新デザインを既定とし、旧デザイン切り替えオプションは追加しない。
 
 ## ファイル変更計画
 
@@ -250,7 +264,7 @@ NOWの年にeventがなくても、新しい年chapterを自動生成するか�
   - NOWの範囲判定と時系列位置への挿入
   - 既存classを維持した補助classと必要最小限のARIA属性追加
 - `css/timeline.css`
-  - デザイントークン、年区切り、実線軸、marker、NOW、横長カード、タイポグラフィ、レスポンシブ
+  - デザイントークン、年区切り、実線軸、marker、NOW、上部サムネイルカード、タイポグラフィ、レスポンシブ
   - 横型Todayと基本色・線・focusの統一
 - `index.html`
   - 既存パラメータだけを使った画像あり・なしのデモデータ
@@ -264,7 +278,7 @@ NOWの年にeventがなくても、新しい年chapterを自動生成するか�
 - `docs/testing-policy.md`
   - NOWとレスポンシブ表示の正常系・境界値
 - `docs/specs/3/requirements.md`
-  - 承認された未決事項と最終受け入れ条件
+  - 確定した実装基準と最終受け入れ条件
 
 ### 条件付き変更
 
@@ -358,23 +372,17 @@ DBやデータmigrationはない。問題発生時はIssue #3のJavaScript、CSS
 
 実際の本番承認者、監視、復旧時間、公開URLは未確認であり、本書では確定しない。
 
-## 実装前に解決する未決事項
+## 確定した実装基準
 
-### 必須
+1. NOWは同時刻event群の直後へ置く。
+2. NOWのためだけの年chapterは生成しない。
+3. 画像付きcardは全画面幅で画像、本文の順に縦積みし、画像4:3、`object-fit: cover`とする。
+4. 長いタイトルと説明は折り返して全文表示する。
+5. 既存class名を維持し、補助classだけを追加する。見た目とDOM直接子関係の完全互換は保証しない。
+6. 新デザインを既定にし、旧デザイン切り替えは追加しない。
+7. 本書のデザイントークンとbefore / after撮影条件を比較基準とする。
+8. Chrome、Edge、Firefox、Safariの最新2メジャーバージョンを確認対象とする。
+9. WCAG 2.2 AAを目標とし、NOWは `role="separator"`、`aria-label="現在"` とする。
+10. `thumbnail.png` は受け入れ確認後にChrome、幅1440px、倍率100%の縦型表示へ更新する。
 
-1. NOWと同時刻eventの前後関係を決定する。
-2. NOWの年にeventがない場合の年chapter表示を決定する。
-3. PCカードのbreakpoint、画像比率、固定高またはaspect-ratioを決定する。
-4. 長いタイトル、説明の折り返し・省略方針を決定する。
-5. DOM階層互換と外部CSS上書きをどこまで保証するか。
-6. 新デザインを既定にするか、旧デザイン切り替えを提供するか。
-7. 完成モック、配色、before / after基準を承認する。
-
-### 運用・品質
-
-8. 正式な対応ブラウザと確認対象端末を決定する。
-9. アクセシビリティ基準とNOWの読み上げ文言を決定する。
-10. `thumbnail.png` の更新要否と撮影条件を決定する。
-11. GitHub Pagesの承認・監視・ロールバック担当を確認する。
-
-カテゴリー、milestone、基準日時指定は本Issueから除外し、必要であれば公開API変更を扱う後続Issueを作成する。残る未決事項が解決しない場合は、CSSだけで年、実線軸、カード、タイポグラフィ、引用符、色を改善する最小Issueへ縮小する。
+カテゴリー、milestone、基準日時指定は本Issueから除外し、必要であれば公開API変更を扱う後続Issueを作成する。GitHub Pagesの承認、監視、ロールバック担当は公開運用上の確認事項として残し、実装仕様のブロッカーにはしない。
