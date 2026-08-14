@@ -282,7 +282,7 @@ NOWの年にeventがなくても新しい年chapterは生成しない。eventの
 
 ### 条件付き変更
 
-- `thumbnail.png`: READMEの代表画像を新デザインへ更新する場合
+- `timeline-horizontal.png`、`timeline-vertical.png`: READMEの横型・縦型デモ画像
 - `docs/architecture.md`: DOM構造または内部データフローの説明が実装後に変わる場合
 
 ### 変更しない
@@ -383,6 +383,6 @@ DBやデータmigrationはない。問題発生時はIssue #3のJavaScript、CSS
 7. 本書のデザイントークンとbefore / after撮影条件を比較基準とする。
 8. Chrome、Edge、Firefox、Safariの最新2メジャーバージョンを確認対象とする。
 9. WCAG 2.2 AAを目標とし、NOWは `role="separator"`、`aria-label="現在"` とする。
-10. `thumbnail.png` は本Issueでは差し替えず、現行画像を維持する。
+10. READMEには横型を `timeline-horizontal.png`、縦型を `timeline-vertical.png` として掲載する。
 
 カテゴリー、milestone、基準日時指定は本Issueから除外し、必要であれば公開API変更を扱う後続Issueを作成する。GitHub Pagesの承認、監視、ロールバック担当は公開運用上の確認事項として残し、実装仕様のブロッカーにはしない。

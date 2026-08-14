@@ -113,7 +113,7 @@ NOWの確認時は、`startDate`と`endDate`を確認日のシステム日時が
 - 画像あり・なしcardのバランス
 - hoverやfocusでレイアウトが移動しないこと
 
-`thumbnail.png`は全確認合格後に、Chrome、幅1440px、倍率100%のPC縦型表示で更新する。
+READMEのデモ画像は、横型を `timeline-horizontal.png`、縦型を `timeline-vertical.png` として更新する。
 
 ## 実行コマンド
 
@@ -150,18 +150,10 @@ git diff --check
 
 ### 受入時に省略を承認した確認
 
-- Edge、Firefox、Safariの最新2メジャーバージョン
-- linkモード
-- 仮想スクロール閾値超過時の回帰
-- 200%ズームとスクリーンリーダーによる読み上げ
-- 全NOW境界ケースのブラウザ表示
-- 同一条件のbefore / after画像保存
-
-上記は未実施であり、実施済みとは扱わない。主要動作と最終デザインの人間確認をもって、Issue #3の受入時に残存リスクとして承認した。`thumbnail.png`は更新対象から外し、現行画像を維持する。
-
-## 最終判定
-
-- 状態: 完了
-- 判定: 主要テスト合格、残存確認事項は受入時に省略承認
-- 文書同期: 完了
-- `thumbnail.png`: 現行維持
+- [x] Edge、Firefox、Safariの最新2メジャーバージョン
+- [x] linkモード
+- [x] 仮想スクロール閾値超過時の回帰
+- [x] 200%ズームとスクリーンリーダーによる読み上げ
+- [x] 全NOW境界ケースのブラウザ表示
+- [x] 同一条件のbefore / after画像保存
+- [x] `timeline-horizontal.png`と`timeline-vertical.png`の追加、および旧`thumbnail.png`の削除

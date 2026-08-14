@@ -28,7 +28,13 @@
 
 ## デモイメージ
 
-![Timeline Generator Demo](thumbnail.png)
+### 横型
+
+![Timeline Generator 横型デモ](timeline-horizontal.png)
+
+### 縦型
+
+![Timeline Generator 縦型デモ](timeline-vertical.png)
 
 ---
 

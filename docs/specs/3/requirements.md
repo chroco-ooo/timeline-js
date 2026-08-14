@@ -182,7 +182,7 @@ python -m http.server 8000
 9. アクセシビリティはWCAG 2.2 AAを目標とし、focus可視性、キーボード操作、文字と主要UIのコントラストを受け入れ対象にする。
 10. NOWは操作要素にせず、`role="separator"` と `aria-label="現在"` で読み上げ可能にする。
 11. 横型のラベル「今日」と縦型のラベル「NOW」は、それぞれの意味を維持する。
-12. `thumbnail.png` は本Issueでは差し替えず、現行画像を維持する。
+12. READMEの代表画像は `timeline-horizontal.png` と `timeline-vertical.png` の2枚に分けて掲載する。
 
 カテゴリー、milestone、基準日時の外部指定は本Issueの未決事項ではなく、パラメータ変更を許容する後続Issueの検討事項とする。
 
@@ -202,7 +202,7 @@ python -m http.server 8000
 
 - `README.md`
 - `index.html`
-- `thumbnail.png`（デモの代表画像を変更する場合）
+- `timeline-horizontal.png`、`timeline-vertical.png`（READMEの横型・縦型デモ画像）
 - `docs/api-spec.md`
 - `docs/screen-spec.md`
 - `docs/testing-policy.md`
