@@ -29,7 +29,7 @@
 | Task 4 | 完了 | NOWの範囲判定、時系列挿入、ARIAを実装 |
 | Task 5 | 完了 | contentと画像ありmodifierを追加 |
 | Task 6 | 完了 | 年、実線軸、上部サムネイルcard、本文、レスポンシブを実装 |
-| Task 7 | 完了 | NOWとTodayの共通トークンを実装 |
+| Task 7 | 完了 | NOWとTodayの共通トークン、横型の年またぎ線を実装 |
 | Task 8 | 完了 | デモデータと画面説明を更新 |
 | Task 9 | 一部完了 | 構文、Chrome相当のローカル確認、1440px・640px・320pxを実施。全対象ブラウザ、linkモード、仮想スクロール、before / after保存は未実施 |
 | Task 10 | 一部完了 | READMEと仕様文書を同期。`thumbnail.png`は未更新 |

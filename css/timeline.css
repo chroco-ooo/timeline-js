@@ -484,6 +484,34 @@
     align-items: center;
 }
 
+#timeline-container .timeline-months .month-cell {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    text-align: center;
+}
+
+#timeline-container .timeline-months .month-cell.timeline-year-boundary::before {
+    position: absolute;
+    top: -12px;
+    bottom: 0;
+    left: 0;
+    width: 1px;
+    background: #e2e8f0;
+    content: "";
+}
+
+#timeline-container .timeline-grid .grid-cell.timeline-year-boundary {
+    border-left: 1px solid #e2e8f0;
+    background: linear-gradient(
+        90deg,
+        rgba(226, 232, 240, 0.32) 0,
+        transparent 12px
+    );
+}
+
 #timeline-container .timeline-grid {
     display: grid;
     grid-auto-rows: 80px;

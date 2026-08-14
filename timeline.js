@@ -536,9 +536,12 @@ class TimelineGenerator {
       this.yearsDiv.appendChild(cell);
     });
 
-    columns.forEach((column) => {
+    columns.forEach((column, columnIndex) => {
       const cell = document.createElement("div");
       cell.className = "month-cell";
+      if (this.isYearBoundary(start + columnIndex)) {
+        cell.classList.add("timeline-year-boundary");
+      }
       cell.innerText = this.getColumnLabel(column);
       this.monthsDiv.appendChild(cell);
     });
@@ -548,6 +551,10 @@ class TimelineGenerator {
     for (let i = 0; i < columns.length * laneCount; i++) {
       const cell = document.createElement("div");
       cell.className = "grid-cell";
+      const columnIndex = i % columnCount;
+      if (this.isYearBoundary(start + columnIndex)) {
+        cell.classList.add("timeline-year-boundary");
+      }
       this.gridDiv.appendChild(cell);
     }
 
@@ -718,6 +725,15 @@ class TimelineGenerator {
 
   getColumnIndex(columns, target) {
     return columns.indexOf(target);
+  }
+
+  isYearBoundary(columnIndex) {
+    if (columnIndex <= 0 || columnIndex >= this.allColumns.length) {
+      return false;
+    }
+    const currentYear = String(this.allColumns[columnIndex]).substring(0, 4);
+    const previousYear = String(this.allColumns[columnIndex - 1]).substring(0, 4);
+    return currentYear !== previousYear;
   }
 
   parseDate(str) {
