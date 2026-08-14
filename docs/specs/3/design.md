@@ -383,6 +383,6 @@ DBやデータmigrationはない。問題発生時はIssue #3のJavaScript、CSS
 7. 本書のデザイントークンとbefore / after撮影条件を比較基準とする。
 8. Chrome、Edge、Firefox、Safariの最新2メジャーバージョンを確認対象とする。
 9. WCAG 2.2 AAを目標とし、NOWは `role="separator"`、`aria-label="現在"` とする。
-10. `thumbnail.png` は受け入れ確認後にChrome、幅1440px、倍率100%の縦型表示へ更新する。
+10. `thumbnail.png` は本Issueでは差し替えず、現行画像を維持する。
 
 カテゴリー、milestone、基準日時指定は本Issueから除外し、必要であれば公開API変更を扱う後続Issueを作成する。GitHub Pagesの承認、監視、ロールバック担当は公開運用上の確認事項として残し、実装仕様のブロッカーにはしない。
