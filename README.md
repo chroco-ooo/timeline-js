@@ -18,7 +18,7 @@
 - 縦型では画像や見出しを操作領域にせず、「詳しく見る」からクリックコールバックまたは外部リンクを実行
 - 縦型の説明は省略せず全文を表示
 - スクロール対応済み（スクロール外でも線が正しく描画）
-- HTML＋SCSS＋JavaScript のシンプル構成
+- HTML＋CSS＋JavaScript のシンプル構成
 - カスタマイズしやすい
 
 ---
@@ -98,7 +98,7 @@ timeline.render();
 | targetId       | 必須 | タイムラインを描画する対象divのID                                                         |
 | startDate      | 必須 | 開始年月 (`"YYYY-MM"` 形式)、日単位の場合は `"YYYY-MM-DD"`、年単位の場合は `"YYYY"`               |
 | endDate        | 必須 | 終了年月 (`"YYYY-MM"` 形式)、日単位の場合は `"YYYY-MM-DD"`、年単位の場合は `"YYYY"`               |
-| scale          | 任意 | `"day"`, `"month"`, `"quarter"`, `"year"`（デフォルトは"month"）                    |
+| scale          | 任意 | `"hour"`, `"day"`, `"month"`, `"quarter"`, `"year"`（デフォルトは`"month"`）       |
 | layout         | 任意 | `"horizontal"` または `"vertical"`（デフォルトは `"horizontal"`）                  |
 | projects       | 必須 | プロジェクト情報配列（下記参照）                                                            |
 | links          | 任意 | プロジェクト間の接続線情報配列                                                             |
@@ -108,6 +108,8 @@ timeline.render();
 | clickMode      | 任意 | `"event"` or `"link"`。`"link"`の場合は `url` を持つプロジェクトをアンカー表示（デフォルト: `"event"`） |
 | linkTarget     | 任意 | `clickMode: "link"` の場合の `target` 属性（デフォルト: `"_blank"`）                     |
 | linkRel        | 任意 | `clickMode: "link"` の場合の `rel` 属性（デフォルト: `"noopener"`）                      |
+| virtualScrollThreshold | 任意 | 横型で仮想スクロールを有効にする列数（デフォルト: `180`）                         |
+| virtualColumnBuffer | 任意 | 仮想スクロールで表示範囲の前後に描画する列数（デフォルト: `12`、最小: `4`）              |
 
 描画後に表示方向を切り替える場合は `setLayout` を使います。
 
@@ -183,7 +185,6 @@ const timeline = new TimelineGenerator({
 
 ## 注意点
 
-- **timeline.scss** を使う場合、必ずCSSにコンパイルしてから読み込んでください。
 - コンテナ要素（例：`#timeline-container`）は **`position: relative;`** を指定してください。
 - 横型は年・月ヘッダーの高さを基準に接続線を描画します。
 - 横型ではプロジェクトの `start` / `end` が範囲外の場合、警告を出して描画をスキップします。
@@ -194,6 +195,16 @@ const timeline = new TimelineGenerator({
 ## ライセンス
 
 MIT License
+
+---
+
+## 開発ドキュメント
+
+- [プロダクト概要](docs/product-overview.md)
+- [アーキテクチャ](docs/architecture.md)
+- [テスト方針](docs/testing-policy.md)
+- [JavaScript API仕様](docs/api-spec.md)
+- [デモ画面仕様](docs/screen-spec.md)
 
 ---
 
