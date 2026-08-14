@@ -113,7 +113,7 @@ NOWの確認時は、`startDate`と`endDate`を確認日のシステム日時が
 - 画像あり・なしcardのバランス
 - hoverやfocusでレイアウトが移動しないこと
 
-`thumbnail.png`は全確認合格後に、Chrome、幅1440px、倍率100%のPC縦型表示で更新する。
+READMEのデモ画像は、横型を `timeline-horizontal.png`、縦型を `timeline-vertical.png` として更新する。
 
 ## 実行コマンド
 
@@ -156,4 +156,4 @@ git diff --check
 - [ ] 200%ズームとスクリーンリーダーによる読み上げ
 - [ ] 全NOW境界ケースのブラウザ表示
 - [ ] 同一条件のbefore / after画像保存
-- [ ] `thumbnail.png`の更新
+- [x] `timeline-horizontal.png`と`timeline-vertical.png`の追加、および旧`thumbnail.png`の削除

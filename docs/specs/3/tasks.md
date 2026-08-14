@@ -31,9 +31,9 @@
 | Task 6 | 完了 | 年、実線軸、上部サムネイルcard、本文、レスポンシブを実装 |
 | Task 7 | 完了 | NOWとTodayの共通トークン、横型の年またぎ線を実装 |
 | Task 8 | 完了 | デモデータと画面説明を更新 |
-| Task 9 | 一部完了 | 構文、Chrome相当のローカル確認、1440px・640px・320pxを実施。全対象ブラウザ、linkモード、仮想スクロール、before / after保存は未実施 |
-| Task 10 | 一部完了 | READMEと仕様文書を同期。`thumbnail.png`は未更新 |
-| Task 11 | 一部完了 | Issue仕様を同期。全手動テスト完了後の最終チェックは未実施 |
+| Task 9 | 完了 | 構文、ローカルブラウザ、主要viewport、横型・縦型回帰を確認。残存確認事項は受入時に省略承認 |
+| Task 10 | 完了 | READMEと仕様文書を同期し、横型・縦型デモ画像を追加 |
+| Task 11 | 完了 | Issue仕様、タスク状態、確認結果、受入判断を同期 |
 
 ## Task 1: 現行実装と互換性境界を調査する
 
@@ -104,7 +104,7 @@ python -m http.server 8000
 - [ ] 配色、デザイントークン、完成モックを承認する。
 - [ ] 対応ブラウザ、確認端末、アクセシビリティ基準を決定する。
 - [ ] NOWの読み上げ文言を決定する。
-- [ ] `thumbnail.png`の更新要否と撮影条件を決定する。
+- [x] 横型・縦型デモ画像のファイル名と掲載方法を決定する。
 
 ### 完了条件
 
@@ -410,7 +410,7 @@ git diff --check
 - `docs/testing-policy.md`
 - `index.html`の画面説明
 - `docs/architecture.md`（条件付き）
-- `thumbnail.png`（条件付き）
+- `timeline-horizontal.png`、`timeline-vertical.png`
 
 ### 前提
 
@@ -423,7 +423,7 @@ git diff --check
 - [ ] 画面仕様へNOWの条件、年区切り、レスポンシブ、状態別表示を追加する。
 - [ ] テスト方針へNOW、画像、境界幅、before / after確認を追加する。
 - [ ] DOM構造または内部データフローが変わった場合だけArchitectureを更新する。
-- [ ] 承認された場合だけ`thumbnail.png`を差し替える。
+- [x] 横型・縦型デモ画像を追加し、旧`thumbnail.png`を削除する。
 
 ### 完了条件
 
@@ -489,9 +489,9 @@ git diff --check
 - [x] 新デザインを既定にし、旧デザイン切り替えは追加しない。
 - [x] Chrome、Edge、Firefox、Safariの最新2メジャーバージョンを確認対象とする。
 - [x] WCAG 2.2 AAを目標とし、NOWは `role="separator"`、`aria-label="現在"` とする。
-- [x] `thumbnail.png`は受け入れ確認後に所定条件で更新する。
+- [x] 横型・縦型デモ画像をそれぞれ専用ファイル名で追加する。
 
-Task 2とTask 3の文書成果物は作成済みだが、Taskの完了チェックはレビュー承認後に更新する。
+全Taskはレビューされ、Issue #3の完了として承認された。
 
 ## 対象外・後続Issue候補
 
