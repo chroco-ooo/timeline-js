@@ -136,8 +136,23 @@ class TimelineGenerator {
     list.className = "timeline-vertical";
     list.setAttribute("role", "list");
 
+    const projects = this.sortProjectsByDate();
+    const now = new Date();
+    const showNow = this.isDateWithinDisplayRange(now);
+    const nowIndex = showNow
+      ? projects.findIndex((project) => {
+        const projectDate = this.getProjectDate(project);
+        return projectDate && projectDate.getTime() < now.getTime();
+      })
+      : -1;
+    const nowInsertionIndex = showNow && nowIndex === -1 ? projects.length : nowIndex;
+
     let previousYear = null;
-    this.sortProjectsByDate().forEach((project, projectIndex) => {
+    projects.forEach((project, projectIndex) => {
+      if (projectIndex === nowInsertionIndex) {
+        list.appendChild(this.createVerticalNow());
+      }
+
       const projectYear = this.getProjectYear(project);
       if (projectYear && projectYear !== previousYear) {
         const chapter = document.createElement("div");
@@ -185,14 +200,17 @@ class TimelineGenerator {
 
       const imageUrl = this.normalizeImageUrl(project.backgroundImage);
       if (imageUrl) {
+        card.classList.add("timeline-vertical-card-has-image");
         const image = document.createElement("img");
         image.className = "timeline-vertical-image";
         image.src = imageUrl;
         image.alt = "";
         image.loading = "lazy";
-        action.appendChild(image);
+        card.appendChild(image);
       }
 
+      const content = document.createElement("div");
+      content.className = "timeline-vertical-content";
       const body = document.createElement("div");
       body.className = "timeline-vertical-body";
       const heading = document.createElement("div");
@@ -213,7 +231,7 @@ class TimelineGenerator {
         project.title || project.name || "Untitled"
       );
       action.appendChild(heading);
-      card.appendChild(action);
+      content.appendChild(action);
 
       this.appendProjectText(
         body,
@@ -244,12 +262,69 @@ class TimelineGenerator {
         footer.appendChild(footerAction);
       }
       body.appendChild(footer);
-      card.appendChild(body);
+      content.appendChild(body);
+      card.appendChild(content);
       item.append(date, marker, card);
       list.appendChild(item);
     });
 
+    if (nowInsertionIndex === projects.length) {
+      list.appendChild(this.createVerticalNow());
+    }
+
     this.container.appendChild(list);
+  }
+
+  createVerticalNow() {
+    const now = document.createElement("div");
+    now.className = "timeline-vertical-now";
+    now.setAttribute("role", "separator");
+    now.setAttribute("aria-label", "現在");
+
+    const line = document.createElement("span");
+    line.className = "timeline-vertical-now-line";
+    line.setAttribute("aria-hidden", "true");
+
+    const label = document.createElement("span");
+    label.className = "timeline-vertical-now-label";
+    label.setAttribute("aria-hidden", "true");
+    label.textContent = "NOW";
+    now.append(line, label);
+    return now;
+  }
+
+  isDateWithinDisplayRange(date) {
+    const start = this.getDisplayRangeBoundary(this.startDate, false);
+    const end = this.getDisplayRangeBoundary(this.endDate, true);
+    return Boolean(start && end && date >= start && date <= end);
+  }
+
+  getDisplayRangeBoundary(value, isEnd) {
+    const date = this.parseDate(value);
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+      return null;
+    }
+
+    if (!isEnd) {
+      return date;
+    }
+
+    const boundary = new Date(date.getTime());
+    if (this.scale === "hour") {
+      boundary.setMinutes(59, 59, 999);
+    } else if (this.scale === "day") {
+      boundary.setHours(23, 59, 59, 999);
+    } else if (this.scale === "quarter") {
+      boundary.setMonth(boundary.getMonth() + 3, 0);
+      boundary.setHours(23, 59, 59, 999);
+    } else if (this.scale === "year") {
+      boundary.setMonth(11, 31);
+      boundary.setHours(23, 59, 59, 999);
+    } else {
+      boundary.setMonth(boundary.getMonth() + 1, 0);
+      boundary.setHours(23, 59, 59, 999);
+    }
+    return boundary;
   }
 
   getProjectYear(project) {
@@ -461,9 +536,12 @@ class TimelineGenerator {
       this.yearsDiv.appendChild(cell);
     });
 
-    columns.forEach((column) => {
+    columns.forEach((column, columnIndex) => {
       const cell = document.createElement("div");
       cell.className = "month-cell";
+      if (this.isYearBoundary(start + columnIndex)) {
+        cell.classList.add("timeline-year-boundary");
+      }
       cell.innerText = this.getColumnLabel(column);
       this.monthsDiv.appendChild(cell);
     });
@@ -473,6 +551,10 @@ class TimelineGenerator {
     for (let i = 0; i < columns.length * laneCount; i++) {
       const cell = document.createElement("div");
       cell.className = "grid-cell";
+      const columnIndex = i % columnCount;
+      if (this.isYearBoundary(start + columnIndex)) {
+        cell.classList.add("timeline-year-boundary");
+      }
       this.gridDiv.appendChild(cell);
     }
 
@@ -643,6 +725,15 @@ class TimelineGenerator {
 
   getColumnIndex(columns, target) {
     return columns.indexOf(target);
+  }
+
+  isYearBoundary(columnIndex) {
+    if (columnIndex <= 0 || columnIndex >= this.allColumns.length) {
+      return false;
+    }
+    const currentYear = String(this.allColumns[columnIndex]).substring(0, 4);
+    const previousYear = String(this.allColumns[columnIndex - 1]).substring(0, 4);
+    return currentYear !== previousYear;
   }
 
   parseDate(str) {
