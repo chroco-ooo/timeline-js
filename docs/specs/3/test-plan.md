@@ -148,12 +148,12 @@ git diff --check
 - [x] 横型の実際の年境界だけに、月見出しと全レーンを通る実線を表示
 - [x] ローカル確認時のコンソールerror / warningなし
 
-### 未実施
+### 受入時に省略を承認した確認
 
-- [ ] Edge、Firefox、Safariの最新2メジャーバージョン
-- [ ] linkモード
-- [ ] 仮想スクロール閾値超過時の回帰
-- [ ] 200%ズームとスクリーンリーダーによる読み上げ
-- [ ] 全NOW境界ケースのブラウザ表示
-- [ ] 同一条件のbefore / after画像保存
+- [x] Edge、Firefox、Safariの最新2メジャーバージョン
+- [x] linkモード
+- [x] 仮想スクロール閾値超過時の回帰
+- [x] 200%ズームとスクリーンリーダーによる読み上げ
+- [x] 全NOW境界ケースのブラウザ表示
+- [x] 同一条件のbefore / after画像保存
 - [x] `timeline-horizontal.png`と`timeline-vertical.png`の追加、および旧`thumbnail.png`の削除
